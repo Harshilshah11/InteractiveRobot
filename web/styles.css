@@ -23,6 +23,9 @@
   --nav-bg: rgba(242, 242, 247, .78);
   --shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 8px 24px rgba(28, 20, 90, .07);
   --halo: rgba(55, 94, 157, .16);
+  --aura-1: rgba(55, 94, 157, .14);
+  --aura-2: rgba(35, 12, 119, .08);
+  --seg-on: #ffffff;
 
   --green: #34c759;
   --red: #ff3b30;
@@ -48,28 +51,58 @@
   --glow: #35c8ff;
 }
 
+/* Dark tokens: applied when chosen, or when following a dark system. The
+   two selectors carry the same list, so keep them in step. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --accent: #7c86ff;
+  --accent-soft: rgba(124, 134, 255, .16);
+  --bg: #07080f;
+  --surface: #16171f;
+  --surface-2: #22232d;
+  --label: #ffffff;
+  --label-2: rgba(235, 235, 245, .62);
+  --label-3: rgba(235, 235, 245, .3);
+  --separator: rgba(84, 84, 88, .55);
+  --fill: rgba(120, 120, 128, .24);
+  --nav-bg: rgba(10, 11, 20, .72);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .5);
+  --halo: rgba(90, 110, 255, .2);
+  --aura-1: rgba(70, 100, 220, .22);
+  --aura-2: rgba(80, 40, 200, .16);
+  --seg-on: #3a3a44;
+  --green: #30d158;
+  --red: #ff453a;
+  --orange: #ff9f0a;
+}
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --accent: #7c86ff;
     --accent-soft: rgba(124, 134, 255, .16);
-
-    --bg: #000000;
-    --surface: #1c1c1e;
-    --surface-2: #2c2c2e;
+    --bg: #07080f;
+    --surface: #16171f;
+    --surface-2: #22232d;
     --label: #ffffff;
     --label-2: rgba(235, 235, 245, .62);
     --label-3: rgba(235, 235, 245, .3);
     --separator: rgba(84, 84, 88, .55);
     --fill: rgba(120, 120, 128, .24);
-    --nav-bg: rgba(18, 18, 20, .72);
+    --nav-bg: rgba(10, 11, 20, .72);
     --shadow: 0 1px 2px rgba(0, 0, 0, .5);
     --halo: rgba(90, 110, 255, .2);
-
+    --aura-1: rgba(70, 100, 220, .22);
+    --aura-2: rgba(80, 40, 200, .16);
+    --seg-on: #3a3a44;
+  --aura-1: rgba(70, 100, 220, .22);
+  --aura-2: rgba(80, 40, 200, .16);
+  --seg-on: #3a3a44;
     --green: #30d158;
     --red: #ff453a;
     --orange: #ff9f0a;
   }
 }
+:root[data-theme="light"] { color-scheme: light; }
 
 * { box-sizing: border-box; }
 
@@ -82,7 +115,11 @@ body {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background: var(--bg);
+  /* a faint wash of the two brand blues, so the page is not flat grey */
+  background:
+    radial-gradient(60rem 40rem at 85% -10%, var(--aura-1), transparent 70%),
+    radial-gradient(50rem 36rem at 10% 110%, var(--aura-2), transparent 70%),
+    var(--bg);
   color: var(--label);
   font: 17px/1.47 var(--font);
   letter-spacing: -.01em;
@@ -111,8 +148,45 @@ button, .switch { -webkit-user-select: none; user-select: none; }
   border-bottom: .5px solid var(--separator);
 }
 
-.brand { display: flex; align-items: center; min-width: 0; }
+.brand { display: flex; align-items: center; min-width: 0; justify-self: start; border-radius: 8px; }
 .brand img { display: block; height: 40px; width: auto; max-width: 100%; }
+/* one logo per theme: the white mark on dark, the two-tone mark on light */
+.brand .logo-dark { display: none; }
+:root[data-theme="dark"] .brand .logo-light { display: none; }
+:root[data-theme="dark"] .brand .logo-dark { display: block; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .brand .logo-light { display: none; }
+  :root:not([data-theme="light"]) .brand .logo-dark { display: block; }
+}
+
+/* iOS segmented control */
+.segmented {
+  display: inline-flex;
+  padding: 2px;
+  background: var(--fill);
+  border-radius: 9px;
+}
+.segmented button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--label-2);
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background .2s var(--ease), color .2s var(--ease);
+}
+.segmented svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.segmented button[aria-checked="true"] {
+  color: var(--label);
+  background: var(--seg-on);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, .12), 0 3px 1px rgba(0, 0, 0, .04);
+}
 
 .nav-title { text-align: center; line-height: 1.2; }
 .nav-title h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.02em; }
@@ -556,6 +630,52 @@ main {
   color: var(--label);
 }
 .answer:empty { display: none; }
+/* only under the greeting: how to start, then out of the way */
+.hint {
+  margin: -2px 0 0;
+  font-size: 15px;
+  text-align: center;
+  color: var(--label-2);
+}
+.speech:not(.greeting-mode) .hint { display: none; }
+
+/* ---------- contact card ---------- */
+.contact-card {
+  margin-top: auto;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 8px 8px;
+  color: #fff;
+  background: linear-gradient(150deg, var(--brand-2), var(--brand));
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 28px rgba(35, 12, 119, .28);
+}
+.contact-title {
+  margin: 0 8px 6px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  opacity: .8;
+}
+.contact-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background .15s var(--ease);
+}
+.contact-row:hover { background: rgba(255, 255, 255, .12); }
+.contact-row svg { flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: .9; }
+.contact-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* re-applied by JS on every new line so the text settles in each time */
 .answer.in, .heard.in { animation: rise .32s var(--ease); }
@@ -589,18 +709,36 @@ main {
 }
 .product:hover { box-shadow: var(--shadow), 0 0 0 2px var(--accent-soft); }
 .product:active { transform: scale(.97); }
-/* app-icon style badge: 40px squircle-ish, concentric with the 14px card */
-.p-badge {
+/* the robot itself, on a tinted tile concentric with the 14px card */
+.p-media {
   flex: none;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  font-size: 17px;
+  width: 76px;
+  height: 56px;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 70%, var(--accent-soft), var(--surface-2) 75%);
+  border-radius: 10px;
+}
+.p-media img {
+  width: 92%;
+  height: 92%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .18));
+  transition: transform .3s var(--spring);
+}
+.product:hover .p-media img { transform: scale(1.08) translateY(-1px); }
+/* dark robots need a lit stage on a dark card */
+:root[data-theme="dark"] .p-media { background: radial-gradient(circle at 50% 60%, rgba(255, 255, 255, .2), rgba(255, 255, 255, .05) 75%); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .p-media { background: radial-gradient(circle at 50% 60%, rgba(255, 255, 255, .2), rgba(255, 255, 255, .05) 75%); }
+}
+/* fallback when an image is missing: the initial, app-icon style */
+.p-media.letter {
+  font-size: 22px;
   font-weight: 700;
   color: #fff;
   background: linear-gradient(145deg, var(--brand-2), var(--brand));
-  border-radius: 10px;
 }
 .p-text { display: flex; flex-direction: column; min-width: 0; }
 .product .p-name { font-size: 15px; font-weight: 600; color: var(--label); }
@@ -715,6 +853,17 @@ main {
 }
 
 /* ---------- medium screens ---------- */
+/* Short screens cannot hold both lists and the contact card: the standing
+   topics give way, since the suggestions above already change with each answer. */
+@media (max-height: 920px) and (min-width: 861px) {
+  .rail .group:nth-child(2) { display: none; }
+}
+
+@media (max-width: 1280px) {
+  .segmented span { display: none; }
+  .segmented button { padding: 0 9px; }
+}
+
 @media (max-width: 1100px) {
   .products { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .nav-title p { display: none; }
@@ -734,7 +883,7 @@ main {
   .layout { flex-direction: column; gap: 14px; padding: 14px 16px max(14px, env(safe-area-inset-bottom)); }
   main { order: 1; min-height: 0; flex: 1 1 auto; gap: 12px; }
   .rail { order: 2; flex: none; gap: 10px; overflow: visible; }
-  .group:last-child { display: none; }
+  .group:nth-child(2), .contact-card { display: none; }
   .group-label { padding: 0 4px; font-size: 12px; }
   .list {
     flex-direction: row;
@@ -764,7 +913,7 @@ main {
   .answer.greeting { font-size: 22px; }
   .products { gap: 8px; }
   .product { min-height: 56px; padding: 10px; }
-  .p-badge { width: 34px; height: 34px; font-size: 15px; border-radius: 9px; }
+  .p-media { width: 58px; height: 44px; border-radius: 8px; }
   .mic { width: 50px; height: 50px; }
   .field { height: 50px; }
   .send { width: 38px; height: 38px; }

@@ -1,0 +1,14 @@
+{
+  "name": "Arnobot Interactive Robot",
+  "short_name": "Arnobot",
+  "description": "Ask Arnobot's assistant about the company, its robots and careers.",
+  "start_url": "/",
+  "display": "fullscreen",
+  "background_color": "#f2f2f7",
+  "theme_color": "#230c77",
+  "icons": [
+    { "src": "/static/assets/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/static/assets/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/static/assets/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

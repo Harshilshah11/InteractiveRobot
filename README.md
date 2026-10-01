@@ -48,12 +48,33 @@ customer.
 
 ## Quick start
 
+```bash
+bash run.sh        # macOS / Linux
+```
 ```powershell
-.\run.ps1
+.\run.ps1          # Windows
 ```
 
 Creates the venv, installs dependencies, indexes `data/`, and serves
-<http://127.0.0.1:8000>. First run downloads the embedding model (~130 MB), once.
+<http://127.0.0.1:8000>. First run downloads the embedding model (~130 MB) and
+the Whisper speech model (~75 MB), once.
+
+### At https://arnobotinteractiverobot.com (this Mac only)
+
+```bash
+bash scripts/local-domain.sh   # once; asks for your Mac password
+bash run.sh
+```
+
+Strictly local: the name resolves to `127.0.0.1` on this Mac only and the app
+listens on `127.0.0.1` only, so nothing on the network or the internet can
+reach it. The microphone only works on `localhost` or over HTTPS, so the script
+makes a private certificate authority, issues a certificate for the name,
+trusts it in the System keychain and adds the name to `/etc/hosts`. Binding
+ports 443/80 needs root, so a loopback-only `pf` rule forwards them to the
+app's 8443/8080, re-applied at boot by a launch daemon. `run.sh` serves HTTPS
+there and redirects plain HTTP. `bash scripts/local-domain.sh --remove` undoes
+all of it.
 
 Then click the mic and ask *"who is the CTO?"* or *"which robot can climb walls?"*
 
@@ -111,22 +132,27 @@ something is actually broken.
 
 ## The layout
 
-Two columns, one accent colour, and a hairline rule instead of a card — the
-question list is part of the page, not a widget sitting on top of it.
+Full-screen and iOS-styled: a translucent nav bar with the Arnobot logo (the
+two-tone mark on light, the white mark on dark), inset grouped question lists,
+the answer on a card, product cards showing each robot's render, and a capsule
+composer. Arnobot indigo is the one accent. The appearance control follows the
+system (Auto) or pins Light or Dark, remembered per screen; the ⛶ button (or
+**F**) hides the browser chrome for a kiosk.
 
 ```
-┌──────────────┬────────────────────────────────┐
-│ ASK ME       │ Arnobot Assistant       Online │
-│  question    ├────────────────────────────────┤
-│  question    │            ╭────╮              │
-│  question    │            │ ●● │   robot       │
-│              │            ╰────╯              │
-│ MORE TOPICS  │        "what you asked"        │
-│  question    │        the answer              │
-│  question    │                                │
-│              │ [Saibya][ATM][NEXUS][Altius]   │
-│              │ (mic) [ type a question ](Ask) │
-└──────────────┴────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────┐
+│ ARNOBOT logo     Interactive Robot    Online [Auto|☀|☾] Voice ⛶ │
+├──────────────┬────────────────────────────────────────────────┤
+│ ASK ME       │                 ╭────╮                         │
+│  question  › │                 │ ●● │   robot                 │
+│  question  › │                 ╰────╯                         │
+│ MORE TOPICS  │      ┌──────────────────────────────┐          │
+│  question  › │      │            ( what you asked )│          │
+│              │      │ the answer                   │          │
+│ ┌──────────┐ │      └──────────────────────────────┘          │
+│ │ contact  │ │ [▣ Saibya][▣ ATM][▣ NEXUS][▣ Altius]           │
+│ └──────────┘ │ (mic) ( 🔍 type a question            ↑ )      │
+└──────────────┴────────────────────────────────────────────────┘
 ```
 
 The rail carries **two groups**: the top one changes with every answer, so the
@@ -463,28 +489,27 @@ Every setting is an environment variable; nothing needs a code change.
 | `ROBOT_ACK` | *"What else would you like to know?"* | Reply to "ok" / "nice" |
 | `ROBOT_CLOSING` | *"Thank you. Ask me anything else…"* | Spoken when the room goes quiet |
 | `ROBOT_CLOSING_DELAY_MS` | `25000` | How long the quiet has to last first |
-| `ROBOT_WHISPER` | `off` | `on` = offline speech-to-text |
+| `ROBOT_WHISPER` | `auto` | `auto` = on if faster-whisper is installed; `on` / `off` |
+| `ROBOT_CONTACT_PHONE` / `_EMAIL` / `_WEB` | Arnobot's | Contact card and spoken referral |
+| `ROBOT_DOMAIN` | `arnobotinteractiverobot.com` | Name used by `run.sh` and `scripts/local-domain.sh` |
 | `ROBOT_OLLAMA` | `off` | `on` = rephrase answers with a local model |
 
 ---
 
 ## Fully offline speech input
 
-The mic uses the browser's built-in recogniser by default because it needs no
-install. **Be aware that Chrome and Edge send that audio to Google/Microsoft for
-transcription** — everything else here is local, but that one step is not.
-Speech *output* is unaffected; it uses your OS voices and never leaves the machine.
+The mic uses the browser's built-in recogniser where it works, because it
+transcribes live as you speak. **Chrome and Edge send that audio to
+Google/Microsoft**, and **Brave blocks that service entirely** (it fails with a
+`network` error). So whenever faster-whisper is installed (it is in
+`requirements.txt`), the page records instead and posts the clip to `/api/stt`,
+transcribed locally by Whisper `tiny.en` (~75 MB, int8 CPU) — automatically in
+Brave and Firefox, and in Chrome/Edge the moment their online service fails.
+Nothing leaves the machine. The turn ends after a 2.5 s pause, 9 s of no
+speech, or 30 s; tapping the mic again sends at once.
 
-To close the gap:
-
-```powershell
-.\.venv\Scripts\python.exe -m pip install faster-whisper
-$env:ROBOT_WHISPER = "on"
-.\run.ps1
-```
-
-The UI switches to recording audio and posting it to `/api/stt`, transcribed
-locally by Whisper `tiny.en` (~75 MB, int8 CPU). Nothing leaves the machine.
+The voice is the OS's: Karen (Apple) by default at 0.95 speed, falling back
+through other female voices; `?voice=Name` overrides it.
 
 ## Optional: local phrasing model
 
@@ -516,7 +541,9 @@ app/
   answerer.py   respond(): small talk -> retrieval -> gate -> profile
   ingest.py     data/ -> index
   main.py       FastAPI routes
-web/            animated SVG robot UI (no build step)
+web/            animated SVG robot UI (no build step), favicon, product renders
+scripts/        local-domain.sh (HTTPS at arnobotinteractiverobot.com), redirect_http.py
+run.sh          macOS / Linux launcher (run.ps1 on Windows)
 data/           company.md — the knowledge base
 test_answers.py accuracy + refusal suite
 ```

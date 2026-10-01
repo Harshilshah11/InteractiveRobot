@@ -78,6 +78,7 @@ SHOULD_ANSWER = [
     # Business questions the source documents don't answer directly, handled
     # with an honest pointer instead of a refusal or an invented fact.
     ("are you hiring", "arnobot.in/career"),
+    ("are you hiring right now", "arnobot.in/career"),
     ("how do I apply for a job", "arnobot.in/apply"),
     ("do you offer internships", "AI Research Intern"),
     ("how can I buy", "order"),

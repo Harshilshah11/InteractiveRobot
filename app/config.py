@@ -47,8 +47,11 @@ OOV_PENALTY = float(os.getenv("ROBOT_OOV_PENALTY", "0.85"))
 
 # Where to send anyone the knowledge base cannot help. Kept in one place so
 # the number and address are never restated inconsistently.
+CONTACT_PHONE = os.getenv("ROBOT_CONTACT_PHONE", "+91 99255 12860")
+CONTACT_EMAIL = os.getenv("ROBOT_CONTACT_EMAIL", "contact@arnobot.in")
+CONTACT_WEB = os.getenv("ROBOT_CONTACT_WEB", "www.arnobot.in")
 CONTACT = os.getenv(
-    "ROBOT_CONTACT", "call +91 99255 12860 or email contact@arnobot.in"
+    "ROBOT_CONTACT", f"call {CONTACT_PHONE} or email {CONTACT_EMAIL}"
 )
 
 # A refusal that ends the conversation is a worse product than one that hands
@@ -118,9 +121,20 @@ OLLAMA_ENABLED = os.getenv("ROBOT_OLLAMA", "off").lower() == "on"
 OLLAMA_URL = os.getenv("ROBOT_OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("ROBOT_OLLAMA_MODEL", "qwen2.5:1.5b-instruct")
 
-# Optional offline speech-to-text (faster-whisper). Off by default — the
-# browser's own recogniser needs no install.
-WHISPER_ENABLED = os.getenv("ROBOT_WHISPER", "off").lower() == "on"
+# Offline speech-to-text (faster-whisper). The browser recogniser in Chrome
+# and Edge streams audio to Google, and Brave blocks that service outright
+# (every attempt fails with a "network" error), so the page falls back to this
+# whenever it is available. "auto" = on if faster-whisper is installed.
+def _whisper_installed() -> bool:
+    import importlib.util
+
+    return importlib.util.find_spec("faster_whisper") is not None
+
+
+_whisper_mode = os.getenv("ROBOT_WHISPER", "auto").lower()
+WHISPER_ENABLED = _whisper_mode == "on" or (
+    _whisper_mode == "auto" and _whisper_installed()
+)
 WHISPER_MODEL = os.getenv("ROBOT_WHISPER_MODEL", "tiny.en")
 
 HOST = os.getenv("ROBOT_HOST", "127.0.0.1")

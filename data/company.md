@@ -336,7 +336,7 @@ Export and delivery outside India are not covered in Arnobot's published materia
 Call +91 99255 12860 or email contact@arnobot.in.
 
 ## Careers and hiring
-also: are you hiring, jobs, careers, vacancy, vacancies, can I join, work with you, recruitment, apply for a job, open positions, open roles, job openings, what roles are open, current openings
+also: are you hiring, are you hiring right now, are you hiring now, currently hiring, any openings now, jobs, careers, vacancy, vacancies, can I join, work with you, recruitment, apply for a job, open positions, open roles, job openings, what roles are open, current openings
 Yes, Arnobot is hiring, and the open roles are listed on the careers page at www.arnobot.in/career.
 The full-time roles are Robotics Engineer, Embedded Systems Developer, Computer Vision Engineer, Autonomy Engineer and Business Development Manager, and there is also a six-month AI Research Intern position.
 All roles are based in Ahmedabad, and the Computer Vision Engineer role can be hybrid.

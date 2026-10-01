@@ -20,7 +20,6 @@ const mic = document.getElementById('mic');
 const speakToggle = document.getElementById('speak');
 const statusEl = document.getElementById('status');
 
-let offlineStt = false;
 let listening = false;
 
 const CAPTIONS = {
@@ -115,19 +114,21 @@ function reveal(el, text) {
 }
 
 // Speech synthesis uses the OS voices — nothing leaves the machine.
-// Browsers cannot reach Siri itself, so this picks the closest female voice
-// installed, best first: Apple's neural Premium/Enhanced voices (the Siri-era
-// family), then the standard Apple ones, then Edge's neural and Chrome's
-// online voices for the same page on Windows. `?voice=Name` overrides it.
+// Browsers cannot reach Siri itself, so this picks a female voice from what is
+// installed: Karen (Apple, Australian English) is the chosen voice; the rest
+// are fallbacks for machines without it — Apple's Premium/Enhanced voices,
+// then the standard Apple ones, then Edge's neural and Chrome's online voices
+// for the same page on Windows. `?voice=Name` overrides it.
 const VOICE_PREFERENCE = [
+  'Karen (Premium)', 'Karen (Enhanced)', 'Karen',
   'Ava (Premium)', 'Zoe (Premium)', 'Ava (Enhanced)', 'Zoe (Enhanced)',
   'Samantha (Enhanced)', 'Allison (Enhanced)', 'Susan (Enhanced)',
-  'Samantha', 'Ava', 'Zoe', 'Allison', 'Susan', 'Veena', 'Karen', 'Moira', 'Tessa',
+  'Samantha', 'Ava', 'Zoe', 'Allison', 'Susan', 'Veena', 'Moira', 'Tessa',
   'Microsoft Aria Online (Natural)', 'Microsoft Jenny Online (Natural)',
   'Microsoft Ava Online (Natural)', 'Microsoft Neerja Online (Natural)',
   'Google US English', 'Google UK English Female', 'Microsoft Zira',
 ];
-const VOICE_RATE = 0.86;  // slower than conversational, so it is easy to follow
+const VOICE_RATE = 0.95; // a touch slower than conversational, so it is easy to follow
 const VOICE_PITCH = 1.05;
 
 let chosenVoice = null;
@@ -215,10 +216,16 @@ function armClosing() {
 
 async function ask(question) {
   cancelClosing();
+  speechEl.classList.remove('greeting-mode');
   // A tapped or typed question while the mic is open replaces the spoken one.
   if (listening) {
     stopMicUi();
+    stopLevelWatch();
     try { recognizer?.abort(); } catch (err) { /* already stopped */ }
+    if (recorder && recorder.state !== 'inactive') {
+      recorder.onstop = () => recorder.stream.getTracks().forEach((t) => t.stop());
+      recorder.stop();
+    }
   }
   answerEl.classList.remove('greeting', 'none', 'asking');
   reveal(heardEl, question);
@@ -349,15 +356,32 @@ if (Recognition) {
   recognizer.onerror = (e) => {
     // Silence and our own abort are not failures — the timers own the ending.
     if (e.error === 'no-speech' || e.error === 'aborted') return;
+    // The online speech service is unreachable or blocked: switch to local
+    // transcription for the rest of the session and keep this turn going.
+    if ((e.error === 'network' || e.error === 'service-not-allowed') && serverStt && listening) {
+      useLocalStt = true;  // also stops onend from restarting the recogniser
+      clearTimeout(silenceTimer);
+      clearTimeout(capTimer);
+      try { recognizer.abort(); } catch (err) { /* already stopped */ }
+      startListening().catch(() => {
+        stopMicUi();
+        setState('idle');
+        setStatus('Microphone unavailable');
+      });
+      return;
+    }
     stopMicUi();
     setState('idle');
     setStatus(
       e.error === 'not-allowed' || e.error === 'service-not-allowed'
         ? 'Microphone access is blocked — allow it in the browser settings'
-        : `Microphone error: ${e.error}`,
+        : e.error === 'network'
+          ? 'Voice input needs Chrome, Edge or Safari here — typing works'
+          : `Microphone error: ${e.error}`,
     );
   };
   recognizer.onend = () => {
+    if (useLocalStt) return;  // the local recorder has taken over this turn
     if (!listening) {
       if (stage.dataset.state === 'listening') setState('idle');
       return;
@@ -369,36 +393,115 @@ if (Recognition) {
   };
 }
 
-// Offline path: record audio and transcribe locally via /api/stt.
+// Offline path: record audio and transcribe on this machine via /api/stt.
+// Used when the browser recogniser cannot work — Brave blocks Google's speech
+// service, Firefox has none — so the mic works in every browser. The same
+// rules end the turn: a pause after speech, a wait for speech, and a cap —
+// measured here from the microphone level, since nothing transcribes live.
+const SPEECH_LEVEL = 0.025;    // RMS above the noise floor that counts as voice
 let recorder = null;
 let clips = [];
+let heardVoice = false;
+let levelTimer = null;
+let audioCtx = null;
+
+function stopLevelWatch() {
+  clearInterval(levelTimer);
+  levelTimer = null;
+  audioCtx?.close().catch(() => {});
+  audioCtx = null;
+}
+
+// Ends a recording turn: transcribe if anyone spoke, otherwise say so.
+function finishRecording() {
+  if (!listening) return;
+  stopMicUi();
+  stopLevelWatch();
+  if (recorder && recorder.state !== 'inactive') recorder.stop();
+}
 
 async function startRecording() {
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+  });
   recorder = new MediaRecorder(stream);
   clips = [];
+  heardVoice = false;
   recorder.ondataavailable = (e) => clips.push(e.data);
   recorder.onstop = async () => {
     stream.getTracks().forEach((t) => t.stop());
+    if (!heardVoice) {
+      setState('idle');
+      setStatus("Didn't catch that — tap the mic and try again");
+      return;
+    }
     setState('thinking');
+    caption.textContent = 'Listening back…';
     const body = new FormData();
-    body.append('audio', new Blob(clips, { type: 'audio/webm' }), 'clip.webm');
+    body.append('audio', new Blob(clips, { type: recorder.mimeType || 'audio/webm' }), 'clip.webm');
     try {
       const data = await (await fetch('/api/stt', { method: 'POST', body })).json();
       if (data.text) ask(data.text);
-      else { setState('idle'); setStatus("didn't catch that"); }
+      else { setState('idle'); setStatus("Didn't catch that — tap the mic and try again"); }
     } catch (err) {
       setState('idle');
-      setStatus('transcription failed');
+      setStatus('Transcription failed');
     }
   };
-  recorder.start();
+  recorder.start(250);
+
+  // Watch the input level: the noise floor is learned in the first moments,
+  // and speech is anything clearly above it.
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 1024;
+  audioCtx.createMediaStreamSource(stream).connect(analyser);
+  const buf = new Float32Array(analyser.fftSize);
+  const t0 = Date.now();
+  let floor = 0.01;
+  let lastVoice = 0;
+  levelTimer = setInterval(() => {
+    analyser.getFloatTimeDomainData(buf);
+    let sum = 0;
+    for (let i = 0; i < buf.length; i += 1) sum += buf[i] * buf[i];
+    const rms = Math.sqrt(sum / buf.length);
+    const now = Date.now();
+    if (now - t0 < 400) { floor = Math.max(floor, rms); return; }
+    if (rms > floor + SPEECH_LEVEL) {
+      heardVoice = true;
+      lastVoice = now;
+      caption.textContent = 'Listening… tap the mic when you are done';
+    }
+    if (heardVoice && now - lastVoice > SILENCE_AFTER_SPEECH_MS) finishRecording();
+    else if (!heardVoice && now - t0 > WAIT_FOR_SPEECH_MS) finishRecording();
+  }, 100);
+}
+
+// Chrome-family browsers send audio to Google; Brave switches that off, so
+// the recogniser there can only ever fail with "network". Go straight to the
+// local path when the server offers it.
+let serverStt = false;
+let useLocalStt = false;
+
+function chooseSttPath() {
+  useLocalStt = serverStt && (!Recognition || Boolean(navigator.brave));
+}
+
+async function startListening() {
+  if (useLocalStt) {
+    await startRecording();
+    capTimer = setTimeout(finishRecording, MAX_LISTEN_MS);
+  } else {
+    recognizer.start();
+    armSilence(WAIT_FOR_SPEECH_MS);
+    capTimer = setTimeout(finishListening, MAX_LISTEN_MS);
+  }
 }
 
 mic.addEventListener('click', async () => {
   // Tapping again means "I'm done" — send what was heard straight away.
   if (listening) {
-    if (offlineStt) { stopMicUi(); recorder?.stop(); } else finishListening();
+    if (useLocalStt) { heardVoice = true; finishRecording(); } else finishListening();
     return;
   }
   try {
@@ -412,20 +515,19 @@ mic.addEventListener('click', async () => {
     setState('listening');
     setStatus();
     answerEl.classList.remove('greeting', 'none', 'asking');
+    speechEl.classList.remove('greeting-mode');
     heardEl.textContent = '';
     answerEl.textContent = '';
-    if (offlineStt) {
-      await startRecording();
-      capTimer = setTimeout(() => { stopMicUi(); recorder?.stop(); }, MAX_LISTEN_MS);
-    } else {
-      recognizer.start();
-      armSilence(WAIT_FOR_SPEECH_MS);
-      capTimer = setTimeout(finishListening, MAX_LISTEN_MS);
-    }
+    await startListening();
   } catch (err) {
     stopMicUi();
+    stopLevelWatch();
     setState('idle');
-    setStatus('Microphone unavailable');
+    setStatus(
+      err && err.name === 'NotAllowedError'
+        ? 'Microphone access is blocked — allow it in the browser settings'
+        : 'Microphone unavailable',
+    );
   }
 });
 
@@ -451,6 +553,32 @@ document.addEventListener('keydown', (e) => {
 // home screen, so the button would do nothing there.
 if (!document.documentElement.requestFullscreen) fullscreenBtn.hidden = true;
 
+// --- appearance -----------------------------------------------------------
+// Auto follows the system; Light and Dark pin it. Stored per screen, so a
+// kiosk keeps its look across restarts.
+const themeControl = document.getElementById('theme');
+
+function applyTheme(choice) {
+  if (choice === 'light' || choice === 'dark') document.documentElement.dataset.theme = choice;
+  else delete document.documentElement.dataset.theme;
+  for (const btn of themeControl.querySelectorAll('[data-theme-choice]')) {
+    btn.setAttribute('aria-checked', String(btn.dataset.themeChoice === (choice || 'system')));
+  }
+}
+
+themeControl.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-theme-choice]');
+  if (!btn) return;
+  const choice = btn.dataset.themeChoice;
+  try {
+    if (choice === 'system') localStorage.removeItem('theme');
+    else localStorage.setItem('theme', choice);
+  } catch (err) { /* storage blocked: the choice lasts for this visit */ }
+  applyTheme(choice);
+});
+
+applyTheme(document.documentElement.dataset.theme || 'system');
+
 // --- boot -----------------------------------------------------------------
 function renderProducts(list) {
   productsEl.replaceChildren(
@@ -459,10 +587,19 @@ function renderProducts(list) {
       card.type = 'button';
       card.className = 'product';
       card.dataset.ask = product.ask;
+      // The robot's own render; falls back to its initial if the image is missing.
       const badge = document.createElement('span');
-      badge.className = 'p-badge';
+      badge.className = 'p-media';
       badge.setAttribute('aria-hidden', 'true');
-      badge.textContent = product.name.charAt(0).toUpperCase();
+      const img = document.createElement('img');
+      img.src = `/static/assets/products/${product.key}.webp`;
+      img.alt = '';
+      img.decoding = 'async';
+      img.addEventListener('error', () => {
+        badge.classList.add('letter');
+        badge.replaceChildren(product.name.charAt(0).toUpperCase());
+      });
+      badge.append(img);
       const text = document.createElement('span');
       text.className = 'p-text';
       const name = document.createElement('span');
@@ -478,18 +615,35 @@ function renderProducts(list) {
   );
 }
 
+// The contact card uses the same settings as the robot's spoken referral.
+function renderContact(contact) {
+  if (!contact) return;
+  const set = (id, text, href) => {
+    const row = document.getElementById(id);
+    if (!text) { row.hidden = true; return; }
+    row.querySelector('span').textContent = text;
+    row.href = href;
+  };
+  set('contactPhone', contact.phone, `tel:${(contact.phone || '').replace(/[^+\d]/g, '')}`);
+  set('contactEmail', contact.email, `mailto:${contact.email}`);
+  set('contactWeb', contact.web, `https://${(contact.web || '').replace(/^https?:\/\//, '')}`);
+  document.getElementById('contact').hidden = false;
+}
+
 async function boot() {
   try {
     const info = await (await fetch('/api/health')).json();
-    offlineStt = info.offline_stt;
+    serverStt = Boolean(info.offline_stt);
+    chooseSttPath();
     closingLine = info.closing || '';
     closingDelay = info.closing_delay_ms || closingDelay;
+    renderContact(info.contact);
     health.dataset.ok = 'true';
     healthText.textContent = 'Online';
     if (info.chunks === 0) setStatus('no knowledge indexed');
-    if (!offlineStt && !Recognition) {
+    if (!serverStt && !Recognition) {
       mic.disabled = true;
-      setStatus('mic needs Chrome or Edge — typing works');
+      setStatus('Voice input needs Chrome, Edge or Safari here — typing works');
     }
   } catch (err) {
     health.dataset.ok = 'false';
@@ -510,6 +664,7 @@ async function boot() {
 // Dev hook: /#state=clarifying freezes the robot in one pose for inspection.
 const forced = location.hash.match(/state=(\w+)/);
 renderChips(STARTERS);
+speechEl.classList.add('greeting-mode');
 setState(forced ? forced[1] : 'idle');
 answerEl.classList.add('in');
 

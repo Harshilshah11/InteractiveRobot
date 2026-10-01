@@ -16,6 +16,9 @@ from .config import (
     CLARIFY_THRESHOLD,
     CLOSING,
     CLOSING_DELAY_MS,
+    CONTACT_EMAIL,
+    CONTACT_PHONE,
+    CONTACT_WEB,
     FALLBACK,
     THRESHOLD,
     WEB_DIR,
@@ -28,6 +31,7 @@ from .retriever import Retriever
 _retriever: Retriever | None = None
 _lock = threading.Lock()
 _whisper: dict = {}
+_whisper_lock = threading.Lock()
 
 
 @asynccontextmanager
@@ -39,7 +43,22 @@ async def lifespan(_app: FastAPI):
     get_retriever()
     # Load the ONNX model now so the first question is not the one that waits.
     embedder.embed_query("warm up")
+    # Same for speech-to-text, but off the startup path: the model takes a
+    # while to load and the page is usable by typing in the meantime.
+    if WHISPER_ENABLED:
+        threading.Thread(target=_whisper_model, daemon=True).start()
     yield
+
+
+def _whisper_model():
+    with _whisper_lock:
+        if "model" not in _whisper:
+            from faster_whisper import WhisperModel
+
+            _whisper["model"] = WhisperModel(
+                WHISPER_MODEL, device="cpu", compute_type="int8"
+            )
+    return _whisper["model"]
 
 
 app = FastAPI(
@@ -151,6 +170,9 @@ def health():
         # one place, by environment variable, like all the others.
         "closing": CLOSING,
         "closing_delay_ms": CLOSING_DELAY_MS,
+        # Shown on the page's contact card, from the same settings the spoken
+        # referral uses, so the two can never disagree.
+        "contact": {"phone": CONTACT_PHONE, "email": CONTACT_EMAIL, "web": CONTACT_WEB},
     }
 
 
@@ -165,19 +187,14 @@ async def stt(audio: UploadFile):
     import tempfile
     from pathlib import Path
 
-    if "model" not in _whisper:
-        from faster_whisper import WhisperModel
-
-        _whisper["model"] = WhisperModel(
-            WHISPER_MODEL, device="cpu", compute_type="int8"
-        )
+    model = _whisper_model()
 
     suffix = Path(audio.filename or "clip.webm").suffix or ".webm"
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
         tmp.write(await audio.read())
         path = tmp.name
 
-    segments, _info = _whisper["model"].transcribe(path, beam_size=1, vad_filter=True)
+    segments, _info = model.transcribe(path, beam_size=1, vad_filter=True)
     text = " ".join(s.text.strip() for s in segments).strip()
     Path(path).unlink(missing_ok=True)
     return {"text": text}

@@ -7,6 +7,10 @@ python-multipart==0.0.20
 # Remove this line and set ROBOT_EMBEDDINGS=off to run keyword-only.
 fastembed==0.5.1
 
-# Optional — fully offline speech-to-text instead of the browser recogniser.
-# Enable with ROBOT_WHISPER=on
-# faster-whisper==1.1.1
+# Offline speech-to-text. Used automatically when the browser recogniser is
+# unavailable (Brave, Firefox) or cannot reach its online service.
+# Set ROBOT_WHISPER=off to disable.
+faster-whisper==1.2.1
+# faster-whisper passes an option newer PyAV (19) rejects; fastembed needs hub < 1.
+av>=11,<16
+huggingface-hub>=0.20,<1.0
