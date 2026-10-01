@@ -1,0 +1,12 @@
+# Core — this is all you need to run the app.
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# Local embeddings: ONNX Runtime, CPU, no PyTorch (~130 MB model, one download).
+# Remove this line and set ROBOT_EMBEDDINGS=off to run keyword-only.
+fastembed==0.5.1
+
+# Optional — fully offline speech-to-text instead of the browser recogniser.
+# Enable with ROBOT_WHISPER=on
+# faster-whisper==1.1.1

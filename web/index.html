@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arnobot Assistant</title>
+<!-- blank tab icon: an empty data URI stops the browser falling back to /favicon.ico -->
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<div class="layout">
+  <!-- Questions stay in one place all session, so the list is somewhere you
+       look rather than something that appears. Filled by JS — see STARTERS. -->
+  <aside class="rail">
+    <div class="rail-group">
+      <p class="rail-label" id="chipsLabel">Ask me</p>
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <!-- Fixed second group: the dynamic list above changes with every answer,
+         so the standing topics need somewhere that does not move. -->
+    <div class="rail-group">
+      <p class="rail-label">More topics</p>
+      <div class="chips" id="topics">
+        <button type="button" class="chip">Where are you located?</button>
+        <button type="button" class="chip">Where have your robots been deployed?</button>
+        <button type="button" class="chip">Have you won any awards?</button>
+        <button type="button" class="chip">How do I place an order?</button>
+        <button type="button" class="chip">Are you hiring?</button>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <header class="head-bar">
+      <div class="titles">
+        <h1>Arnobot Assistant</h1>
+        <p>Robots, specifications and deployments</p>
+      </div>
+      <!-- reads /api/health: says nothing until it has actually connected, so
+           "Connecting" is the honest initial state -->
+      <div class="health" id="health" data-ok="pending">
+        <span id="healthText">Connecting…</span>
+      </div>
+    </header>
+
+    <!-- The robot and what it says are one centred block; the product strip and
+         composer stay pinned below whatever height that block ends up. -->
+    <div class="centre">
+
+      <!-- data-state drives every animation:
+           idle | listening | thinking | speaking | clarifying | refusing -->
+      <div class="stage" id="stage" data-state="idle">
+        <svg class="robot" viewBox="0 0 240 280" aria-hidden="true">
+          <defs>
+            <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stop-color="#ffffff"/>
+              <stop offset="55%"  stop-color="#eef3fb"/>
+              <stop offset="100%" stop-color="#c2d0e6"/>
+            </linearGradient>
+            <linearGradient id="torso" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stop-color="#8b6cf5"/>
+              <stop offset="100%" stop-color="#5b62e8"/>
+            </linearGradient>
+            <linearGradient id="limb" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%"   stop-color="#ff9f6b"/>
+              <stop offset="100%" stop-color="#ff6b6b"/>
+            </linearGradient>
+            <linearGradient id="pod" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stop-color="#4fe0d0"/>
+              <stop offset="100%" stop-color="#22b3a6"/>
+            </linearGradient>
+          </defs>
+
+          <!-- expanding rings, visible only while listening -->
+          <g class="rings">
+            <circle cx="120" cy="96" r="78"/>
+            <circle cx="120" cy="96" r="78"/>
+            <circle cx="120" cy="96" r="78"/>
+          </g>
+
+          <ellipse class="shadow" cx="120" cy="258" rx="56" ry="8"/>
+
+          <g class="bob">
+            <!-- antenna -->
+            <line class="stem" x1="120" y1="46" x2="120" y2="26"/>
+            <circle class="bulb" cx="120" cy="18" r="8"/>
+
+            <!-- arms sit behind the torso -->
+            <rect class="arm l" x="41"  y="162" width="18" height="54" rx="9"/>
+            <rect class="arm r" x="181" y="162" width="18" height="54" rx="9"/>
+
+            <!-- feet: drawn before the torso so it overlaps their top edge -->
+            <rect class="foot" x="74"  y="232" width="32" height="16" rx="8"/>
+            <rect class="foot" x="134" y="232" width="32" height="16" rx="8"/>
+
+            <!-- torso -->
+            <rect class="body" x="64" y="150" width="112" height="88" rx="28"/>
+            <rect class="chest" x="87" y="166" width="66" height="48" rx="17"/>
+            <circle class="core" cx="120" cy="190" r="13"/>
+            <rect class="belt" x="74" y="222" width="92" height="7" rx="3.5"/>
+
+            <!-- ear pods behind the head -->
+            <ellipse class="pod l" cx="47"  cy="96" rx="11" ry="19"/>
+            <ellipse class="pod r" cx="193" cy="96" rx="11" ry="19"/>
+
+            <!-- head -->
+            <g class="head">
+              <rect class="shell" x="52" y="44" width="136" height="102" rx="30"/>
+              <rect class="crest" x="70" y="51" width="100" height="8" rx="4"/>
+              <rect class="visor" x="66" y="64" width="108" height="66" rx="24"/>
+
+              <g class="eyes">
+                <rect class="eye" x="90"  y="82" width="15" height="24" rx="7.5"/>
+                <rect class="eye" x="135" y="82" width="15" height="24" rx="7.5"/>
+              </g>
+
+              <!-- inner ends sit higher than outer: reads as apologetic, not cross -->
+              <g class="brows">
+                <line x1="86" y1="78" x2="109" y2="72"/>
+                <line x1="154" y1="78" x2="131" y2="72"/>
+              </g>
+
+              <g class="mouth">
+                <rect x="101.5" y="114" width="5" height="8" rx="2.5"/>
+                <rect x="109.5" y="114" width="5" height="8" rx="2.5"/>
+                <rect x="117.5" y="114" width="5" height="8" rx="2.5"/>
+                <rect x="125.5" y="114" width="5" height="8" rx="2.5"/>
+                <rect x="133.5" y="114" width="5" height="8" rx="2.5"/>
+              </g>
+            </g>
+          </g>
+        </svg>
+
+        <p class="caption" id="caption"></p>
+      </div>
+
+      <section class="speech" id="speech" aria-live="polite">
+        <p class="heard" id="heard"></p>
+        <p class="answer greeting" id="answer">How may I help you?</p>
+      </section>
+
+    </div>
+
+    <!-- The four platforms, served from /api/products so the range is defined
+         once. Always present: it is the fastest route to what most people
+         opened this to ask about. -->
+    <nav class="products" id="products" aria-label="Products"></nav>
+
+    <form id="form" class="composer" autocomplete="off">
+      <button type="button" id="mic" class="mic" aria-label="Speak">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/>
+          <path d="M19 11a7 7 0 0 1-14 0M12 18v3"/>
+        </svg>
+      </button>
+      <input id="q" placeholder="Type a question" aria-label="Question">
+      <button type="submit" class="send" aria-label="Send">Ask</button>
+    </form>
+
+    <footer>
+      <label class="toggle"><input type="checkbox" id="speak" checked> Voice</label>
+      <!-- only appears when something is actually wrong -->
+      <span id="status" class="status"></span>
+      <span class="by">Robotics Redefined</span>
+    </footer>
+  </main>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>
