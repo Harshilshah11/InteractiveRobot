@@ -156,3 +156,24 @@ WHISPER_PROMPT = os.getenv(
 
 HOST = os.getenv("ROBOT_HOST", "127.0.0.1")
 PORT = int(os.getenv("ROBOT_PORT", "8000"))
+
+# Offline-first -------------------------------------------------------------
+# The kiosk must run with no internet. Both models are downloaded once into a
+# local cache; after that, Hugging Face's client would still try to reach the
+# hub on every start, which stalls or fails with the network down. Once both
+# caches exist, force it to use them and never go online. Set
+# ROBOT_ONLINE_MODELS=on to allow fetching again (e.g. to change model).
+def _models_cached() -> bool:
+    embed_cache = ROOT / "store" / "models"
+    hub = Path(os.getenv("HF_HOME", Path.home() / ".cache" / "huggingface")) / "hub"
+    whisper_ok = not WHISPER_ENABLED or any(
+        hub.glob(f"models--Systran--faster-whisper-{WHISPER_MODEL}")
+    )
+    embed_ok = not EMBEDDINGS_ENABLED or any(embed_cache.glob("models--*"))
+    return whisper_ok and embed_ok
+
+
+if os.getenv("ROBOT_ONLINE_MODELS", "off").lower() != "on" and _models_cached():
+    os.environ.setdefault("HF_HUB_OFFLINE", "1")
+    os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+OFFLINE_MODELS = os.environ.get("HF_HUB_OFFLINE") == "1"

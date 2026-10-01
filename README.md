@@ -174,7 +174,31 @@ the product cards drop to two columns.
 | Element | What it does |
 |---|---|
 | Header status | Reads `/api/health`; says "Connecting…" until it has actually connected, because claiming to be online before the first response is decoration |
-| Product cards | The four platforms from `/api/products`, always on screen — the fastest route to what most people opened this to ask |
+| Product cards | The four platforms from `/api/products`, always on screen — the fastest route to what most people opened this to ask. Tapping one opens the showcase |
+
+### Product showcase
+
+A product card opens a full sheet over the page. On the left, the robot on a
+360° turntable — drag to rotate, or it turns slowly on its own (Saibya, NEXUS
+and Altius; ATM floats its render) — with field videos and photos beneath. On
+the right, tabs for Overview, Specifications, Features, Applications and
+Industries, with figures set in bold, while the robot speaks the overview.
+It runs as a tour: the robot reads each tab in turn (Overview, Specifications,
+Features, Attachments where there are any, Applications, Industries), then the
+tabs keep cycling quietly; the media plays the turntable, each video to its end
+and each photo for a few seconds, then loops. Tapping a tab or a thumbnail jumps
+there and the tour carries on from it. "Hear the full brief" restarts the
+narration; Stop silences it; Esc or ✕ closes.
+
+Saibya has an **Attachments** tab: surveillance, gun mounting, payload carrying,
+grass cutting and mine dispensing, each a card with its photo and the sentence
+from its own `## Saibya … attachment` section in `company.md`.
+
+The text comes from `/api/products/<key>`, which returns the product's five
+sections **verbatim from `company.md`**, so the sheet and the spoken answer can
+never disagree. Media lives in `web/assets/products/<key>/`: `360/frame-NN.webp`
+(the website's turntable renders), `gallery-N.webp`, `video-N.mp4` with a
+`video-N-poster.webp` still — all taken from the Arnobot website.
 
 The product cards carry **no figures** on purpose. A card quoting a payload
 could drift out of step with `data/company.md`; the answer behind the card is
@@ -506,6 +530,23 @@ Every setting is an environment variable; nothing needs a code change.
 | `ROBOT_OLLAMA` | `off` | `on` = rephrase answers with a local model |
 
 ---
+
+## Runs without internet
+
+After the first start (which downloads the embedding model and the Whisper
+speech model, ~200 MB together), the assistant needs no network at all:
+
+| Part | Offline |
+|---|---|
+| Answers, search, product showcase, images, videos | Local files and a local index |
+| Speech out | The OS voices (Karen by default) |
+| Speech in | Whisper on this machine; Chrome/Edge fall back to it when their online recogniser fails |
+| Models | `app/config.py` sets `HF_HUB_OFFLINE` once both caches exist, so nothing checks the hub on start (`ROBOT_ONLINE_MODELS=on` to allow it) |
+| arnobot.in sync | Fails quietly and keeps the last copy; resumes when the network returns |
+
+Verified by starting a second server with every outbound request sent to a
+dead proxy: it started, answered, transcribed speech, and the site sync
+reported `failed` in under a second without touching the existing copy.
 
 ## Fully offline speech input
 

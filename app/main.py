@@ -7,7 +7,7 @@ import threading
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -21,6 +21,7 @@ from .config import (
     CONTACT_EMAIL,
     CONTACT_PHONE,
     CONTACT_WEB,
+    DATA_DIR,
     FALLBACK,
     SITE_MAX_AGE_HOURS,
     SITE_SYNC_ENABLED,
@@ -30,7 +31,7 @@ from .config import (
     WHISPER_MODEL,
     WHISPER_PROMPT,
 )
-from .products import DEFAULT_FOLLOWUPS, PRODUCTS
+from .products import DEFAULT_FOLLOWUPS, PRODUCTS, product_detail
 from .retriever import Retriever
 
 _retriever: Retriever | None = None
@@ -184,6 +185,33 @@ def products_list():
             for key, product in PRODUCTS.items()
         ]
     }
+
+
+@app.get("/api/products/{key}")
+def product_showcase(key: str):
+    """One robot for the showcase sheet: its five sections from company.md,
+    verbatim, plus whatever media exists for it on disk (a 360° frame
+    sequence, field photos, the cut-out render)."""
+    if key not in PRODUCTS:
+        raise HTTPException(status_code=404, detail="Unknown product")
+    detail = product_detail(key, (DATA_DIR / "company.md").read_text(encoding="utf-8"))
+    media_dir = WEB_DIR / "assets" / "products"
+    base = "/static/assets/products"
+    frames = sorted((media_dir / key / "360").glob("frame-*.webp"))
+    for card in detail["attachments"]:
+        if card.get("image"):
+            card["image"] = f"/static/assets/products/{key}/{card['image']}"
+    detail["media"] = {
+        "render": f"{base}/{key}.webp",
+        "spin": [f"{base}/{key}/360/{f.name}" for f in frames],
+        "gallery": [
+            f"{base}/{key}/{f.name}" for f in sorted((media_dir / key).glob("gallery-*.webp"))
+        ],
+        "videos": [
+            f"{base}/{key}/{f.name}" for f in sorted((media_dir / key).glob("video-*.mp4"))
+        ],
+    }
+    return detail
 
 
 @app.get("/api/health")

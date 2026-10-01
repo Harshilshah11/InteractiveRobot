@@ -57,13 +57,73 @@ const STARTERS = [
 // clarification or a referral is *asking* for one — those keep them up.
 const BUSY = new Set(['listening', 'thinking', 'speaking']);
 
+// What the nav bar says the robot is doing.
+const NAV_STATE = {
+  idle: 'Ready',
+  listening: 'Listening…',
+  thinking: 'Thinking…',
+  speaking: 'Speaking',
+  clarifying: 'Needs a little more',
+  refusing: 'Ready',
+};
+const navState = document.getElementById('navState');
+
 function setState(state) {
   stage.dataset.state = state;
+  if (navState) navState.textContent = NAV_STATE[state] ?? 'Ready';
   // mirrored on <body> so the answer card and composer can follow the state
   document.body.dataset.state = state;
   caption.textContent = CAPTIONS[state] ?? '';
   // The rail is a fixture — dimmed while the robot works, never removed.
   chips.classList.toggle('dim', BUSY.has(state));
+}
+
+// Each question gets an icon for its topic, so the list scans at a glance.
+const ICONS = {
+  company: '<path d="M4 21V5l8-3 8 3v16"/><path d="M9 21v-5h6v5M8 9h2M14 9h2M8 13h2M14 13h2"/>',
+  robot: '<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01M9.5 16.5h5"/>',
+  choose: '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+  payload: '<path d="M6 8h12l2 12H4z"/><path d="M9 8a3 3 0 0 1 6 0"/>',
+  industry: '<path d="M3 21V10l6 4V10l6 4V6l6 3v12z"/>',
+  demo: '<circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/>',
+  place: '<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+  deploy: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+  award: '<circle cx="12" cy="9" r="5"/><path d="M8.5 13.5L7 21l5-3 5 3-1.5-7.5"/>',
+  order: '<path d="M3 4h2l2.4 11h11L21 8H6.2"/><circle cx="9" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
+  hiring: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/>',
+  people: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>',
+  spec: '<path d="M4 7h16M4 12h16M4 17h10"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>',
+};
+const ICON_RULES = [
+  [/hiring|job|career|intern|work with/i, 'hiring'],
+  [/award|recogni/i, 'award'],
+  [/order|buy|price|cost|quot/i, 'order'],
+  [/deploy|pilot|trial/i, 'deploy'],
+  [/locat|where are you|address|office/i, 'place'],
+  [/demo/i, 'demo'],
+  [/industr|sector/i, 'industry'],
+  [/carr|payload|weigh|load/i, 'payload'],
+  [/choose|which robot|compare|best/i, 'choose'],
+  [/founder|team|ceo|cto|who/i, 'people'],
+  [/spec|size|battery|speed|range/i, 'spec'],
+  [/robot|product|saibya|nexus|altius|atm|make/i, 'robot'],
+  [/arnobot|company|do you do|about/i, 'company'],
+];
+
+function decorateChip(button) {
+  if (button.querySelector('.chip-tx')) return button;
+  const text = button.textContent.trim();
+  const kind = (ICON_RULES.find(([re]) => re.test(text)) || [null, 'info'])[1];
+  const ic = document.createElement('span');
+  ic.className = 'chip-ic';
+  ic.setAttribute('aria-hidden', 'true');
+  ic.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16">${ICONS[kind]}</svg>`;
+  const tx = document.createElement('span');
+  tx.className = 'chip-tx';
+  tx.textContent = text;
+  button.replaceChildren(ic, tx);
+  return button;
 }
 
 // `list` empty falls back to the starter set, so the rail is never a dead end.
@@ -76,10 +136,16 @@ function renderChips(list, label) {
       button.className = 'chip';
       button.style.setProperty('--i', items.indexOf(text));
       button.textContent = text;
-      return button;
+      return decorateChip(button);
     }),
   );
-  chipsLabel.textContent = items === STARTERS ? 'Ask me' : label;
+  const heading = items === STARTERS ? 'Ask me' : label;
+  if (chipsLabel.textContent !== heading) {
+    chipsLabel.textContent = heading;
+    chipsLabel.classList.remove('swap');
+    void chipsLabel.offsetWidth;
+    chipsLabel.classList.add('swap');
+  }
 }
 
 // A profile runs several times the length of an ordinary answer. The speech
@@ -355,7 +421,7 @@ for (const list of [chips, topics]) {
 
 productsEl.addEventListener('click', (e) => {
   const card = e.target.closest('.product');
-  if (card) ask(card.dataset.ask);
+  if (card) openShowcase(card.dataset.key, card);
 });
 
 
@@ -670,6 +736,413 @@ document.addEventListener('keydown', (e) => {
 // home screen, so the button would do nothing there.
 if (!document.documentElement.requestFullscreen) fullscreenBtn.hidden = true;
 
+// --- product showcase -----------------------------------------------------
+// A product card opens a sheet: a 360° view you can drag (or the render, where
+// there is no turntable set), field photos, and the robot's own sections —
+// verbatim from the data — while the robot speaks the overview.
+const showcase = document.getElementById('showcase');
+const scName = document.getElementById('scName');
+const scKind = document.getElementById('scKind');
+const scLead = document.getElementById('scLead');
+const scTabs = document.getElementById('scTabs');
+const scPanel = document.getElementById('scPanel');
+const scThumbs = document.getElementById('scThumbs');
+const scView = document.getElementById('scView');
+const scSpin = document.getElementById('scSpin');
+const scPhoto = document.getElementById('scPhoto');
+const scVideo = document.getElementById('scVideo');
+const scHint = document.getElementById('scHint');
+const SPIN_STEP_PX = 7;       // drag distance per frame
+const SPIN_AUTO_MS = 70;      // idle turntable speed
+
+let scProduct = null;
+let scOpener = null;
+let spinFrames = [];
+let spinIndex = 0;
+let spinTimer = null;
+let spinDrag = null;
+
+// Figures — dimensions, weights, ranges — are set in bold so a spec reads at
+// a glance. Only formatting: the words are the data's own.
+const FIGURE = /(\d+(?:[.,]\d+)*(?:\s?x\s?\d+(?:[.,]\d+)*)*\s?(?:mm|kilograms?|kg|kilometres?|metres?|minutes|hours|degrees Celsius|volts?|amp-hours?|amp|megapixels?|%)?)/g;
+
+function withFigures(text) {
+  const frag = document.createDocumentFragment();
+  text.split(FIGURE).forEach((part, i) => {
+    if (!part) return;
+    if (i % 2) {
+      const strong = document.createElement('strong');
+      strong.className = 'fig';
+      strong.textContent = part;
+      frag.append(strong);
+    } else {
+      frag.append(document.createTextNode(part));
+    }
+  });
+  return frag;
+}
+
+function showFacet(facet) {
+  for (const tab of scTabs.querySelectorAll('[role="tab"]')) {
+    tab.setAttribute('aria-selected', String(tab.dataset.facet === facet));
+  }
+  let lines = (scProduct?.sections[facet] || []).slice(facet === 'overview' ? 1 : 0);
+  // Attachments: the sentences that belong to a card are shown on the card.
+  const cards = facet === 'attachments' ? (scProduct?.attachments || []) : [];
+  if (cards.length) lines = lines.filter((line) => !cards.some((c) => c.text === line));
+  const items = lines.map((line, i) => {
+    const li = document.createElement('li');
+    li.style.setProperty('--i', i);
+    li.append(withFigures(line));
+    return li;
+  });
+  if (cards.length) items.push(attachmentGrid(cards, items.length));
+  scPanel.replaceChildren(...items);
+  scPanel.classList.remove('swap');
+  void scPanel.offsetWidth;
+  scPanel.classList.add('swap');
+}
+
+// A grid of attachment cards: photo, name, and the data's own sentence. A card
+// without a photo shows its figures instead, as a spec tile.
+function attachmentGrid(cards, offset) {
+  const li = document.createElement('li');
+  li.className = 'sc-attgrid';
+  li.append(...cards.map((card, i) => {
+    const el = document.createElement('figure');
+    el.className = 'sc-att';
+    el.style.setProperty('--i', offset + i);
+    if (card.image) {
+      const img = document.createElement('img');
+      img.src = card.image;
+      img.alt = card.title;
+      img.loading = 'lazy';
+      el.append(img);
+    } else {
+      const tile = document.createElement('div');
+      tile.className = 'sc-att-figs';
+      tile.append(...(card.figures || []).map((f) => {
+        const b = document.createElement('b');
+        b.textContent = f;
+        return b;
+      }));
+      el.append(tile);
+    }
+    const cap = document.createElement('figcaption');
+    const h = document.createElement('strong');
+    h.textContent = card.title;
+    const p = document.createElement('span');
+    p.append(withFigures(card.text));
+    cap.append(h, p);
+    el.append(cap);
+    return el;
+  }));
+  return li;
+}
+
+// An attachment card opens its photo in the main view.
+scPanel.addEventListener('click', (e) => {
+  const card = e.target.closest('.sc-att');
+  const img = card?.querySelector('img');
+  if (!img) return;
+  clearTimeout(mediaTimer);
+  showView('photo', img.src);
+  resumeMediaTourLater();
+});
+
+scTabs.addEventListener('click', (e) => {
+  const tab = e.target.closest('[role="tab"]');
+  if (tab) narrate(tab.dataset.facet);   // read this one, then carry on from here
+});
+
+// --- turntable
+function setFrame(i) {
+  if (!spinFrames.length) return;
+  spinIndex = ((i % spinFrames.length) + spinFrames.length) % spinFrames.length;
+  scSpin.src = spinFrames[spinIndex];
+}
+
+function startAutoSpin() {
+  stopAutoSpin();
+  if (spinFrames.length && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    spinTimer = setInterval(() => setFrame(spinIndex + 1), SPIN_AUTO_MS);
+  }
+}
+
+function stopAutoSpin() {
+  clearInterval(spinTimer);
+  spinTimer = null;
+}
+
+scView.addEventListener('pointerdown', (e) => {
+  if (!spinFrames.length || scView.dataset.mode !== 'spin') return;
+  stopAutoSpin();
+  clearTimeout(mediaTimer);
+  scView.setPointerCapture(e.pointerId);
+  spinDrag = { x: e.clientX, start: spinIndex };
+  scView.classList.add('dragging');
+  scHint.classList.add('used');
+});
+scView.addEventListener('pointermove', (e) => {
+  if (!spinDrag) return;
+  setFrame(spinDrag.start - Math.round((e.clientX - spinDrag.x) / SPIN_STEP_PX));
+});
+const endDrag = () => {
+  if (!spinDrag) return;
+  spinDrag = null;
+  scView.classList.remove('dragging');
+  // let go: the turntable resumes, and the tour moves on after a pause
+  setTimeout(() => { if (scView.dataset.mode === 'spin' && !spinDrag) startAutoSpin(); }, 1500);
+  resumeMediaTourLater();
+};
+scView.addEventListener('pointerup', endDrag);
+scView.addEventListener('pointercancel', endDrag);
+
+// --- view modes: 360° (or render) and photos
+function showView(mode, src) {
+  scView.dataset.mode = mode;
+  if (mode !== 'video') scVideo.pause();
+  if (mode === 'photo') {
+    stopAutoSpin();
+    scPhoto.src = src;
+  } else if (mode === 'video') {
+    stopAutoSpin();
+    if (!scVideo.src.endsWith(src)) {
+      scVideo.poster = posterFor(src);
+      scVideo.src = src;
+    }
+    scVideo.currentTime = 0;
+    scVideo.play().catch(() => {});
+  } else {
+    startAutoSpin();
+  }
+  scHint.hidden = !(mode === 'spin' && spinFrames.length);
+  for (const t of scThumbs.children) t.setAttribute('aria-current', String(t.dataset.src === (src || 'spin')));
+}
+
+const posterFor = (video) => video.replace(/\.mp4$/, '-poster.webp');
+
+function renderThumbs(media) {
+  const items = [{ src: 'spin', img: media.spin[0] || media.render, label: media.spin.length ? '360°' : 'Model' }]
+    .concat((media.videos || []).map((v, i) => ({ src: v, video: true, label: `Video ${i + 1}` })))
+    .concat(media.gallery.map((g, i) => ({ src: g, img: g, label: `Photo ${i + 1}` })));
+  scThumbs.replaceChildren(...items.map((item, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'sc-thumb';
+    b.dataset.src = item.src;
+    b.style.setProperty('--i', i);
+    b.setAttribute('role', 'listitem');
+    b.setAttribute('aria-label', item.label);
+    if (item.video) {
+      // poster: a still from ~1.5 s in, made once — the opening frame is often black
+      const img = document.createElement('img');
+      img.src = posterFor(item.src);
+      img.alt = '';
+      img.loading = 'lazy';
+      b.append(img);
+      b.classList.add('is-video');
+      b.dataset.kind = 'video';
+    } else {
+      const img = document.createElement('img');
+      img.src = item.img;
+      img.alt = '';
+      img.loading = 'lazy';
+      b.append(img);
+    }
+    if (item.src === 'spin') {
+      const tag = document.createElement('span');
+      tag.textContent = item.label;
+      b.append(tag);
+    }
+    return b;
+  }));
+}
+
+scThumbs.addEventListener('click', (e) => {
+  const t = e.target.closest('.sc-thumb');
+  if (!t) return;
+  // every thumbnail is a stop on the tour: jump there, and carry on from it
+  playMedia(mediaItems.indexOf(t.dataset.src));
+});
+
+// --- media tour: 360° view, each video in turn, then each photo, then round
+// again. A video moves on when it ends; the turntable after one slow turn; a
+// photo after a few seconds.
+const SPIN_DWELL_MS = 6000;
+const PHOTO_DWELL_MS = 5000;
+const RESUME_AFTER_MS = 7000;   // after a drag or a photo, before the tour moves on
+let mediaItems = [];
+let mediaIdx = 0;
+let mediaTimer = null;
+
+function playMedia(i) {
+  clearTimeout(mediaTimer);
+  if (!mediaItems.length || showcase.hidden) return;
+  mediaIdx = ((i % mediaItems.length) + mediaItems.length) % mediaItems.length;
+  const item = mediaItems[mediaIdx];
+  if (item === 'spin') {
+    showView('spin');
+    if (mediaItems.length > 1) mediaTimer = setTimeout(() => playMedia(mediaIdx + 1), SPIN_DWELL_MS);
+  } else if (item.endsWith('.mp4')) {
+    showView('video', item);
+  } else {
+    showView('photo', item);
+    mediaTimer = setTimeout(() => playMedia(mediaIdx + 1), PHOTO_DWELL_MS);
+  }
+}
+
+function resumeMediaTourLater() {
+  clearTimeout(mediaTimer);
+  mediaTimer = setTimeout(() => playMedia(mediaIdx + 1), RESUME_AFTER_MS);
+}
+
+scVideo.addEventListener('ended', () => {
+  if (!showcase.hidden && scView.dataset.mode === 'video') playMedia(mediaIdx + 1);
+});
+// a clip that will not play is skipped rather than left as a black frame
+scVideo.addEventListener('error', () => {
+  if (!showcase.hidden && scView.dataset.mode === 'video') playMedia(mediaIdx + 1);
+});
+
+// --- narration tour: read the overview, then each tab in turn. After one
+// spoken pass the tabs keep cycling quietly, so the sheet stays alive on a
+// kiosk without the robot talking forever.
+const BASE_FACETS = ['overview', 'specs', 'features', 'uses', 'industries'];
+let FACET_ORDER = BASE_FACETS;
+const FACET_INTRO = {
+  overview: '',
+  specs: 'Specifications.',
+  features: 'Key features.',
+  attachments: 'Attachments.',
+  uses: 'Applications.',
+  industries: 'Industries.',
+};
+const TAB_DWELL_MS = 9000;
+let tourToken = 0;
+let tabTimer = null;
+
+function currentFacet() {
+  return scTabs.querySelector('[aria-selected="true"]')?.dataset.facet || 'overview';
+}
+
+function narrate(facet) {
+  const token = ++tourToken;
+  clearTimeout(tabTimer);
+  showFacet(facet);
+  const lines = [FACET_INTRO[facet], ...(scProduct?.sections[facet] || [])].filter(Boolean);
+  speakInSheet(lines, () => {
+    if (token !== tourToken || showcase.hidden) return;
+    const next = FACET_ORDER.indexOf(facet) + 1;
+    if (next < FACET_ORDER.length) narrate(FACET_ORDER[next]);
+    else rotateTabs();
+  });
+}
+
+function rotateTabs() {
+  const token = ++tourToken;
+  clearTimeout(tabTimer);
+  const step = () => {
+    if (token !== tourToken || showcase.hidden) return;
+    const i = FACET_ORDER.indexOf(currentFacet());
+    showFacet(FACET_ORDER[(i + 1) % FACET_ORDER.length]);
+    tabTimer = setTimeout(step, TAB_DWELL_MS);
+  };
+  tabTimer = setTimeout(step, TAB_DWELL_MS);
+}
+
+function stopTours() {
+  tourToken += 1;
+  clearTimeout(tabTimer);
+  clearTimeout(mediaTimer);
+}
+
+// --- speaking inside the sheet
+function speakInSheet(lines, onDone) {
+  cancelClosing();
+  cancelTranscription();
+  setState('speaking');
+  speak(lines.join(' '), () => {
+    setState('idle');
+    onDone?.();
+  });
+}
+
+// Stop silences the voice; the tabs carry on cycling quietly.
+document.getElementById('scStop').addEventListener('click', () => {
+  cancelSpeech();
+  setState('idle');
+  rotateTabs();
+});
+// The whole tour again, from the overview.
+document.getElementById('scBrief').addEventListener('click', () => {
+  if (scProduct) narrate('overview');
+});
+document.getElementById('scDemo').addEventListener('click', () => {
+  closeShowcase();
+  ask('Can I get a demo?');
+});
+
+async function openShowcase(key, opener) {
+  let data;
+  try {
+    data = await (await fetch(`/api/products/${encodeURIComponent(key)}`)).json();
+  } catch (err) {
+    setStatus('Could not open that product — please try again');
+    return;
+  }
+  if (!data || !data.sections) return;
+  scProduct = data;
+  scOpener = opener || null;
+  scName.textContent = data.name;
+  scKind.textContent = data.kind;
+  scLead.replaceChildren(withFigures(data.sections.overview[0] || ''));
+
+  spinFrames = data.media.spin;
+  scSpin.src = spinFrames[0] || data.media.render;
+  // warm the turntable so the first drag is smooth
+  spinFrames.forEach((src) => { const im = new Image(); im.src = src; });
+  spinIndex = 0;
+  scView.classList.toggle('static', !spinFrames.length);
+  renderThumbs(data.media);
+  // Attachments get their own tab, after features, only where they exist.
+  const hasAttachments = Boolean(data.attachments?.length);
+  scTabs.querySelector('[data-facet="attachments"]').hidden = !hasAttachments;
+  FACET_ORDER = hasAttachments
+    ? ['overview', 'specs', 'features', 'attachments', 'uses', 'industries']
+    : BASE_FACETS;
+  showFacet('overview');
+
+  showcase.hidden = false;
+  document.body.classList.add('sheet-open');
+  requestAnimationFrame(() => showcase.classList.add('open'));
+  showcase.querySelector('.sc-close').focus({ preventScroll: true });
+
+  mediaItems = ['spin', ...(data.media.videos || []), ...(data.media.gallery || [])];
+  playMedia(0);
+  narrate('overview');
+}
+
+function closeShowcase() {
+  if (showcase.hidden) return;
+  stopTours();
+  stopAutoSpin();
+  scVideo.pause();
+  cancelSpeech();
+  if (stage.dataset.state === 'speaking') setState('idle');
+  showcase.classList.remove('open');
+  document.body.classList.remove('sheet-open');
+  setTimeout(() => { showcase.hidden = true; }, 380);
+  scOpener?.focus({ preventScroll: true });
+}
+
+showcase.addEventListener('click', (e) => {
+  if (e.target.closest('[data-close]')) closeShowcase();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !showcase.hidden) closeShowcase();
+});
+
 // --- appearance -----------------------------------------------------------
 // Auto follows the system; Light and Dark pin it. Stored per screen, so a
 // kiosk keeps its look across restarts.
@@ -705,6 +1178,8 @@ function renderProducts(list) {
       card.className = 'product';
       card.style.setProperty('--i', list.indexOf(product));
       card.dataset.ask = product.ask;
+      card.dataset.key = product.key;
+      card.setAttribute('aria-haspopup', 'dialog');
       // The robot's own render; falls back to its initial if the image is missing.
       const badge = document.createElement('span');
       badge.className = 'p-media';
@@ -784,7 +1259,18 @@ const forced = location.hash.match(/state=(\w+)/);
 renderChips(STARTERS);
 speechEl.classList.add('greeting-mode');
 setState(forced ? forced[1] : 'idle');
-[...topics.children].forEach((chip, i) => chip.style.setProperty('--i', i + 6));
+[...topics.children].forEach((chip, i) => { chip.style.setProperty('--i', i + 6); decorateChip(chip); });
+
+// --- clock ----------------------------------------------------------------
+const clockTime = document.getElementById('clockTime');
+const clockDate = document.getElementById('clockDate');
+function tick() {
+  const now = new Date();
+  clockTime.textContent = now.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+  clockDate.textContent = now.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+tick();
+setInterval(tick, 1000);
 document.body.classList.add('ready');
 answerEl.classList.add('in');
 

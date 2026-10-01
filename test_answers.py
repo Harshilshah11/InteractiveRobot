@@ -96,6 +96,16 @@ SHOULD_ANSWER = [
     ("NEXUS will not turn on", "recharge"),
     ("what temperature can NEXUS handle", "45 degrees"),
     ("can Saibya climb stairs", "stair"),
+    # Saibya's five attachments: each question lands on its own section, and
+    # the answer opens on a whole sentence about that attachment.
+    ("what attachments does Saibya have", "five attachments"),
+    ("tell me about the mine dispensing attachment", "dispenser rails"),
+    ("can saibya cut grass", "mower deck"),
+    ("can saibya carry a gun", "weapon mount"),
+    ("what is the surveillance attachment", "sensor mast"),
+    ("does saibya have a hopper", "open hopper"),
+    ("how fast is Saibya", "8 kilometres per hour"),
+    ("how long does Saibya run", "3 hours"),
     # Website facts (arnobot.in)
     ("which robot can climb walls", "Altius"),
     ("what are your office hours", "10 AM"),

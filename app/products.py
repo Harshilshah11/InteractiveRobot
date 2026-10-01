@@ -38,6 +38,17 @@ PRODUCTS: dict[str, dict] = {
             "uses": "Saibya use cases",
             "industries": "Saibya industries",
         },
+        # Beyond the five facets: shown as its own tab in the showcase. Each
+        # attachment has its own section in the data (short sections retrieve
+        # cleanly); a card shows that section's text, the data's own wording.
+        "extras": {"attachments": "Saibya attachments"},
+        "attachment_cards": [
+            {"title": "Surveillance", "image": "attach-surveillance.webp", "heading": "Saibya surveillance attachment"},
+            {"title": "Gun mounting", "image": "attach-gun-mount.webp", "heading": "Saibya gun mounting attachment"},
+            {"title": "Payload carrying", "image": "attach-payload.webp", "heading": "Saibya payload carrying attachment"},
+            {"title": "Grass cutting", "image": "attach-grass-cutting.webp", "heading": "Saibya grass cutting attachment"},
+            {"title": "Mine dispensing", "image": "attach-mine-dispensing.webp", "heading": "Saibya mine dispensing attachment"},
+        ],
     },
     "atm": {
         "name": "ATM",
@@ -317,3 +328,53 @@ def prune(followups: list[str], question: str, limit: int = 3) -> list[str]:
         if len(out) >= limit:
             break
     return out
+
+
+def section_sentences(markdown: str, heading: str) -> list[str]:
+    """The sentences under one `## heading`, verbatim, without its `also:` line.
+
+    Used by the product showcase, so the sheet shows exactly the text the
+    robot reads aloud — never a separately written summary that could drift.
+    """
+    out: list[str] = []
+    inside = False
+    for line in markdown.splitlines():
+        if line.startswith("#"):
+            if inside:
+                break
+            inside = line.lstrip("#").strip().lower() == heading.lower()
+            continue
+        if not inside:
+            continue
+        text = line.strip()
+        if text and not text.lower().startswith("also:") and not text.startswith("<!--"):
+            out.append(text)
+    return out
+
+
+def product_detail(key: str, markdown: str) -> dict:
+    """Everything the showcase needs about one robot, read from the data."""
+    product = PRODUCTS[key]
+    detail = {
+        "key": key,
+        "name": product["name"],
+        "kind": product["kind"],
+        "ask": f"Tell me about {product['name']}",
+        "sections": {
+            facet: section_sentences(markdown, heading)
+            for facet, heading in {**product["sections"], **product.get("extras", {})}.items()
+        },
+        "attachments": _attachment_cards(product, markdown),
+    }
+    if detail["attachments"]:
+        detail["sections"]["attachments"] += [c["text"] for c in detail["attachments"]]
+    return detail
+
+
+def _attachment_cards(product: dict, markdown: str) -> list[dict]:
+    cards = []
+    for card in product.get("attachment_cards", []):
+        text = " ".join(section_sentences(markdown, card["heading"]))
+        if text:  # a card whose section was removed from the data is dropped
+            cards.append({**{k: v for k, v in card.items() if k != "heading"}, "text": text})
+    return cards

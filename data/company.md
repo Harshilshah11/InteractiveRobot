@@ -154,12 +154,44 @@ Saibya measures 1078 x 692 x 402 mm and weighs 70 kilograms.
 It has 135 mm ground clearance, four wheel drive and a payload capacity of up to 200 kilograms.
 It runs on a 24 volt 50 amp-hour NMC battery and an autonomous variant is available.
 
+## Saibya performance
+also: how fast is saibya, saibya speed, saibya top speed, saibya turning radius, can saibya turn on the spot, saibya climbing angle, saibya slope, saibya runtime, how long does saibya run, saibya charge time, how long to charge saibya, saibya stair height
+Saibya reaches 8 kilometres per hour and turns on the spot with a zero-radius turn.
+It climbs a 30 degree grade and steps up stairs of up to 150 mm.
+It runs about 3 hours on nominal use and recharges in 5 hours, and its rated payload over rough all-terrain ground is 90 kilograms.
+
 ## Saibya features
 also: can saibya climb stairs, stair climbing, saibya drive, is it wireless, rugged, EV mobility, saibya design, saibya capability, what can saibya do, saibya key features
 Saibya has a 4 by 4 high-traction drive, climbs stairs, and offers remote, semi-autonomous and fully autonomous control.
 It supports modular attachments and is built on a rugged design with EV-based mobility and wireless drive.
 It handles slopes, stairs and desert sand, and supports access to further advancements and attachments.
 It is driven by a Jumper T14 radio controller and carries an onboard electronics compartment with UART and 12 volt and 24 volt power for customer payloads.
+
+## Saibya attachments
+also: saibya attachments, saibya accessories, saibya modules, what can you mount on saibya, what attachments does saibya have, saibya payload options, saibya add ons, modular attachments, saibya tools, which attachments are available
+Saibya has five attachments: surveillance, gun mounting, payload carrying, grass cutting and mine dispensing.
+Each attachment comes off with standard tooling, so the same vehicle changes job in the field.
+The onboard electronics compartment gives every attachment a UART link and 24 volt and 12 volt user power rated at 10 amps.
+
+## Saibya surveillance attachment
+also: what is the surveillance attachment, tell me about the surveillance attachment, surveillance attachment, saibya surveillance attachment, saibya mast, saibya max, surveillance fit, camera mast, saibya cameras, saibya floodlight, saibya siren, saibya beacon, can saibya do surveillance
+The surveillance attachment raises a sensor mast with cameras, radio antennas, a floodlight bar, a siren and an amber warning beacon.
+
+## Saibya gun mounting attachment
+also: what is the gun mounting attachment, tell me about the gun mounting attachment, gun mounting attachment, saibya gun mounting, gun mount, weapon mount, weapon station, can saibya carry a gun, armed saibya, saibya weapon
+The gun mounting attachment fits a weapon mount with its own sighting cameras to the deck, so the weapon is aimed from the robot's view rather than a soldier's position.
+
+## Saibya payload carrying attachment
+also: what is the payload carrying attachment, tell me about the payload carrying attachment, payload carrying attachment, saibya payload carrying, payload carrier, hopper, saibya hopper, carry material, material transport attachment, saibya bin
+The payload carrying attachment fits an open hopper to the deck for moving loose material, within Saibya's payload of up to 200 kilograms.
+
+## Saibya grass cutting attachment
+also: what is the grass cutting attachment, tell me about the grass cutting attachment, grass cutting attachment, saibya grass cutting, can saibya cut grass, mower, lawn mower, grass cutter, vegetation, solar farm grass, saibya mowing
+The grass cutting attachment mounts a mower deck at the front, so Saibya can keep vegetation down on sites such as solar farms.
+
+## Saibya mine dispensing attachment
+also: what is the mine dispensing attachment, tell me about the mine dispensing attachment, mine dispensing attachment, saibya mine dispensing, mine dispenser, mine laying, lay mines, mine laying attachment, saibya mines, minefield
+The mine dispensing attachment carries twin dispenser rails, so mines are laid from a remotely driven vehicle instead of by hand.
 
 ## Saibya use cases
 also: what is saibya used for, saibya applications, saibya missions, saibya tasks, where can saibya be used, saibya jobs
