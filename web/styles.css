@@ -1,0 +1,519 @@
+/* Restrained on purpose: flat surfaces, hairline rules, one accent, and no
+   effect that does not carry information. Every colour below is muted — the
+   state glows included — because this sits in front of customers. */
+/* Arnobot blue throughout the page furniture: accent, focus rings, links and
+   the cool neutrals all come off the same hue. The robot keeps its own fixed
+   palette below — it is a character, not chrome. */
+:root {
+  --brand: #1256c4;
+  --brand-soft: #e8f0fd;
+
+  --bg: #f3f6fb;
+  --panel: #ffffff;
+  --line: #d5dfee;
+  --line-soft: #e9f0fa;
+  --text: #0f1826;
+  --muted: #5a6577;
+  --accent: var(--brand);
+
+  /* robot palette — fixed, so the character looks the same in both themes */
+  --visor: #101728;
+  --crest: #ffcf5c;
+
+  /* per-state glow: eyes, mouth, antenna, chest core */
+  --live: #ff4d5e;
+  --think: #ffa62b;
+  --ok: #2ee6a8;
+  --glow: #35c8ff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --brand: #4f92f7;
+    --brand-soft: #10243f;
+
+    --bg: #070b12;
+    --panel: #0e1420;
+    --line: #1e2b3f;
+    --line-soft: #121b29;
+    --text: #e6ecf5;
+    --muted: #8593a8;
+
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ---------- page ---------- */
+.layout {
+  display: flex;
+  gap: 32px;
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+  height: 100vh;
+  height: 100dvh;
+  padding: 24px 28px;
+}
+
+main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---------- question rail ---------- */
+/* A hairline rule instead of a card: the list is part of the page, not a
+   widget sitting on top of it. */
+.rail {
+  flex: 0 0 244px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  min-height: 0;
+  padding-right: 28px;
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.rail-group { display: flex; flex-direction: column; gap: 8px; flex: none; }
+
+.rail-label {
+  margin: 0;
+  flex: none;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.chips {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  flex: none;
+  transition: opacity .2s;
+}
+/* Dimmed rather than hidden while the robot works: a list that vanishes on
+   every question is a list you stop looking at. */
+.chips.dim { opacity: .45; pointer-events: none; }
+
+.chip {
+  padding: 9px 10px 9px 12px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: left;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-left: 2px solid transparent;
+  border-radius: 0 5px 5px 0;
+  cursor: pointer;
+  transition: color .15s, background .15s, border-color .15s;
+}
+.chip:hover {
+  color: var(--text);
+  background: var(--line-soft);
+  border-left-color: var(--accent);
+}
+
+/* ---------- header ---------- */
+.head-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: none;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.titles { flex: 1 1 auto; min-width: 0; }
+.titles h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+}
+.titles p { margin: 0; font-size: 12.5px; color: var(--muted); }
+
+/* Says nothing useful until it has actually connected — a green dot that
+   appears before the first request has been answered is decoration. */
+.health {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.health[data-ok="false"] { color: var(--live); }
+
+/* ---------- the unit ---------- */
+/* Unit and answer are centred together as one block. Letting the stage take
+   all the free space on its own strands the unit in the middle of an empty
+   column with the text marooned at the bottom. */
+.centre {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+.stage {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  text-align: center;
+}
+/* A definite height, not a percentage: the stage is sized by its contents, so
+   `height: 100%` here is circular and resolves to nothing. */
+.robot {
+  flex: none;
+  height: min(348px, 41vh);
+  width: auto;
+  max-width: 100%;
+  overflow: visible;
+  transition: height .3s ease;
+}
+/* A full product profile is four times the length of an ordinary answer and
+   needs the height more than the robot does. Without this the centred block
+   overflows and the robot slides up behind the header. */
+.centre.long .robot { height: min(216px, 25vh); }
+
+/* ---------- the robot ---------- */
+/* The character's colours are fixed rather than themed, so it looks like
+   itself on a light page and a dark one. Only the glow changes with state. */
+.shadow { fill: #000; opacity: .22; }
+.shell { fill: url(#shell); }
+.body  { fill: url(#torso); }
+.arm, .foot { fill: url(#limb); }
+.pod   { fill: url(#pod); }
+.visor { fill: var(--visor); }
+.crest, .belt { fill: var(--crest); }
+.chest { fill: rgba(255, 255, 255, .12); }
+.stem  { stroke: #b8c4d8; stroke-width: 4; stroke-linecap: round; }
+
+/* everything that reads the state */
+.eye, .bulb, .core { fill: var(--glow); }
+.mouth rect { fill: var(--glow); opacity: .92; }
+.brows line { stroke: var(--glow); stroke-width: 4; stroke-linecap: round; opacity: 0; }
+.rings circle { fill: none; stroke: var(--glow); stroke-width: 2; opacity: 0; }
+
+.eye, .bulb, .core, .mouth rect { filter: drop-shadow(0 0 7px var(--glow)); }
+.shell, .body { filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .35)); }
+
+/* ---------- idle ---------- */
+.bob { animation: bob 3.4s ease-in-out infinite; }
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+.head { animation: tilt 7s ease-in-out infinite; transform-origin: 120px 140px; }
+@keyframes tilt {
+  0%, 100% { transform: rotate(0); }
+  35%      { transform: rotate(2deg); }
+  70%      { transform: rotate(-2deg); }
+}
+/* blinks, and glances side to side between blinks */
+.eyes { animation: blink 6.2s ease-in-out infinite; transform-origin: 120px 94px; }
+@keyframes blink {
+  0%, 40%       { transform: translateX(0) scaleY(1); }
+  46%           { transform: translateX(0) scaleY(.1); }
+  52%, 74%      { transform: translateX(4px) scaleY(1); }
+  92%, 100%     { transform: translateX(0) scaleY(1); }
+}
+.core { animation: pulse 3.2s ease-in-out infinite; }
+@keyframes pulse {
+  0%, 100% { opacity: .6; }
+  50%      { opacity: 1; }
+}
+.bulb { animation: pulse 2.6s ease-in-out infinite; }
+.arm { animation: sway 4.2s ease-in-out infinite; transform-origin: 120px 165px; }
+.arm.r { animation-delay: -2.1s; }
+@keyframes sway {
+  0%, 100% { transform: rotate(0); }
+  50%      { transform: rotate(2deg); }
+}
+.pod { animation: pulse 5s ease-in-out infinite; }
+.mouth rect { opacity: .35; }
+
+/* ---------- listening ---------- */
+[data-state="listening"] { --glow: var(--live); }
+.rings circle { transform-origin: 120px 96px; }
+[data-state="listening"] .rings circle { animation: sonar 1.9s ease-out infinite; }
+[data-state="listening"] .rings circle:nth-child(2) { animation-delay: .63s; }
+[data-state="listening"] .rings circle:nth-child(3) { animation-delay: 1.26s; }
+@keyframes sonar {
+  0%   { transform: scale(.55); opacity: .55; }
+  100% { transform: scale(1.25); opacity: 0; }
+}
+[data-state="listening"] .bulb { animation: pulse .7s ease-in-out infinite; }
+[data-state="listening"] .eyes { animation: none; transform: scaleY(1.15); }
+[data-state="listening"] .bob { animation-duration: 1.8s; }
+[data-state="listening"] .arm { animation-duration: 1.8s; }
+/* leans in slightly, the way you do when you're actually listening */
+[data-state="listening"] .head { animation: none; transform: rotate(0) translateY(2px); }
+
+/* ---------- thinking ---------- */
+[data-state="thinking"] { --glow: var(--think); }
+/* eyes narrow to scanning slits and sweep side to side */
+[data-state="thinking"] .eyes {
+  animation: scan 1s ease-in-out infinite;
+  transform: scaleY(.32);
+}
+@keyframes scan {
+  0%, 100% { transform: scaleY(.32) translateX(-5px); }
+  50%      { transform: scaleY(.32) translateX(5px); }
+}
+[data-state="thinking"] .mouth rect { animation: none; height: 3px; y: 117px; opacity: .5; }
+[data-state="thinking"] .bulb { animation: spinpulse .6s linear infinite; }
+@keyframes spinpulse { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+/* a bigger, slower tilt reads as pondering */
+[data-state="thinking"] .head { animation: tilt 1.6s ease-in-out infinite; }
+[data-state="thinking"] .arm { animation-duration: 2.4s; }
+
+/* ---------- speaking ---------- */
+[data-state="speaking"] { --glow: var(--ok); }
+[data-state="speaking"] .mouth rect {
+  animation: talk .42s ease-in-out infinite alternate;
+  transform-origin: center 118px;
+  opacity: .95;
+}
+[data-state="speaking"] .mouth rect:nth-child(1) { animation-delay: -.34s; }
+[data-state="speaking"] .mouth rect:nth-child(2) { animation-delay: -.17s; }
+[data-state="speaking"] .mouth rect:nth-child(4) { animation-delay: -.21s; }
+[data-state="speaking"] .mouth rect:nth-child(5) { animation-delay: -.38s; }
+@keyframes talk {
+  from { transform: scaleY(.35); }
+  to   { transform: scaleY(2.6); }
+}
+[data-state="speaking"] .bob { animation-duration: 1.4s; }
+[data-state="speaking"] .arm { animation-duration: 1.4s; }
+[data-state="speaking"] .head { animation: tilt 2.2s ease-in-out infinite; }
+
+/* ---------- not sure ---------- */
+/* Amber like thinking, because that is what this is: still thinking, out
+   loud. The head cocks and stays cocked — a held pose reads as a question,
+   where the refusing shake reads as a full stop. */
+[data-state="clarifying"] { --glow: var(--think); }
+[data-state="clarifying"] .eyes { animation: none; }
+/* one eye squints under one raised brow: both is alarm, one is a query */
+[data-state="clarifying"] .eye:first-child {
+  transform: scaleY(.55);
+  transform-origin: 97px 94px;
+}
+[data-state="clarifying"] .brows line:first-child { opacity: .85; }
+[data-state="clarifying"] .mouth rect { animation: none; height: 4px; y: 116px; opacity: .7; }
+[data-state="clarifying"] .head {
+  animation: cock .55s ease-out forwards;
+  transform-origin: 120px 140px;
+}
+@keyframes cock {
+  from { transform: rotate(0); }
+  to   { transform: rotate(-7deg); }
+}
+[data-state="clarifying"] .bulb { animation: pulse 1.5s ease-in-out infinite; }
+
+/* ---------- no answer ---------- */
+[data-state="refusing"] { --glow: #97a2b8; }
+[data-state="refusing"] .eyes { animation: none; transform: scaleY(.55); }
+[data-state="refusing"] .brows line { opacity: .9; }
+[data-state="refusing"] .mouth rect { height: 3px; y: 118px; }
+[data-state="refusing"] .head { animation: shake .5s ease-in-out; transform-origin: 120px 140px; }
+@keyframes shake {
+  0%, 100% { transform: rotate(0); }
+  25%      { transform: rotate(-5deg); }
+  75%      { transform: rotate(5deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bob, .eyes, .core, .bulb, .mouth rect, .rings circle,
+  .head, .arm, .pod, .chip, .answer, .heard {
+    animation: none !important;
+  }
+  /* the cocked head is a pose, not a motion — keep it */
+  [data-state="clarifying"] .head { transform: rotate(-7deg); }
+}
+
+/* ---------- text ---------- */
+.caption { margin: 10px 0 0; font-size: 12px; color: var(--muted); min-height: 18px; flex: none; }
+
+/* Never shrinks: the answer is why the page exists, so the unit yields space
+   to it rather than the other way round. */
+.speech {
+  flex: 0 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* `safe` stops a long answer being clipped at the top when it overflows */
+  justify-content: safe center;
+  gap: 8px;
+  padding: 2px 0;
+  max-height: 40vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.speech::-webkit-scrollbar { display: none; }
+.speech > * { flex: none; }
+/* the last line fades when there is more below — with the scrollbar hidden,
+   nothing else says the answer continues */
+.speech.more {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 26px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 26px), transparent);
+}
+.heard { margin: 0; font-size: 13px; color: var(--muted); max-width: 64ch; }
+.heard:not(:empty)::before { content: "“"; }
+.heard:not(:empty)::after { content: "”"; }
+/* Left-aligned inside a centred, measure-limited column. A seven-line product
+   profile set centred is a chore to read, however tidy it looks. */
+.answer { margin: 0; font-size: 16.5px; line-height: 1.62; max-width: 64ch; }
+.answer.none { color: var(--muted); }
+/* a clarification is a live question, not a dead end — keep it full strength */
+.answer.asking { color: var(--text); }
+.answer.greeting { font-size: 20px; color: var(--muted); }
+
+/* re-applied by JS on every new line so the text settles in each time */
+.answer.in, .heard.in { animation: rise .26s ease-out; }
+@keyframes rise {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ---------- product strip ---------- */
+/* The fastest route to what most people opened this to ask about. Served from
+   /api/products, so the range is defined in one place. */
+.products {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  flex: none;
+}
+.product {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  text-align: left;
+  font: inherit;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.product:hover { border-color: var(--accent); }
+.product .p-name { font-size: 13.5px; font-weight: 600; color: var(--text); }
+.product .p-kind { font-size: 11.5px; line-height: 1.35; color: var(--muted); }
+
+/* ---------- controls ---------- */
+.composer { display: flex; align-items: center; gap: 8px; flex: none; }
+
+.mic {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: color .15s, border-color .15s;
+}
+.mic svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.mic:hover { color: var(--text); border-color: var(--accent); }
+.mic.on { color: #fff; background: var(--live); border-color: var(--live); }
+.mic:disabled { opacity: .45; cursor: not-allowed; }
+
+#q {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  padding: 0 13px;
+  font: inherit;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  outline: none;
+  transition: border-color .15s;
+}
+#q::placeholder { color: var(--muted); }
+#q:focus { border-color: var(--accent); }
+
+.send {
+  height: 40px;
+  flex: none;
+  padding: 0 18px;
+  font: inherit;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.send:hover { opacity: .88; }
+
+footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: none;
+  font-size: 12px;
+  color: var(--muted);
+}
+.toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.status { flex: 1 1 auto; color: var(--think); }
+.by { opacity: .8; }
+
+/* ---------- narrow screens ---------- */
+/* No side to put a rail on, so it becomes a row beneath the unit. */
+@media (max-width: 860px) {
+  .layout { flex-direction: column; gap: 14px; padding: 16px; }
+  main { order: 1; min-height: 0; }
+  .rail {
+    order: 2;
+    flex: 0 1 auto;
+    max-height: 27vh;
+    padding: 12px 0 0;
+    border-right: 0;
+    border-top: 1px solid var(--line);
+  }
+  .chips { flex-direction: row; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    padding: 7px 12px;
+    font-size: 13px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+  }
+  .chip:hover { border-color: var(--accent); }
+  .robot { height: min(264px, 32vh); }
+  .speech { max-height: 32vh; }
+  .head-bar { padding-bottom: 10px; }
+  .titles p { display: none; }
+  /* four cards side by side become unreadable slivers on a phone */
+  .products { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
