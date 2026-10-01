@@ -115,6 +115,43 @@ function reveal(el, text) {
 }
 
 // Speech synthesis uses the OS voices — nothing leaves the machine.
+// Browsers cannot reach Siri itself, so this picks the closest female voice
+// installed, best first: Apple's neural Premium/Enhanced voices (the Siri-era
+// family), then the standard Apple ones, then Edge's neural and Chrome's
+// online voices for the same page on Windows. `?voice=Name` overrides it.
+const VOICE_PREFERENCE = [
+  'Ava (Premium)', 'Zoe (Premium)', 'Ava (Enhanced)', 'Zoe (Enhanced)',
+  'Samantha (Enhanced)', 'Allison (Enhanced)', 'Susan (Enhanced)',
+  'Samantha', 'Ava', 'Zoe', 'Allison', 'Susan', 'Veena', 'Karen', 'Moira', 'Tessa',
+  'Microsoft Aria Online (Natural)', 'Microsoft Jenny Online (Natural)',
+  'Microsoft Ava Online (Natural)', 'Microsoft Neerja Online (Natural)',
+  'Google US English', 'Google UK English Female', 'Microsoft Zira',
+];
+const VOICE_RATE = 0.86;  // slower than conversational, so it is easy to follow
+const VOICE_PITCH = 1.05;
+
+let chosenVoice = null;
+
+function pickVoice() {
+  const voices = window.speechSynthesis?.getVoices() || [];
+  if (!voices.length) return;
+  const wanted = new URLSearchParams(location.search).get('voice');
+  const english = voices.filter((v) => /^en[-_]/i.test(v.lang));
+  const byName = (name) => english.find((v) => v.name === name)
+    || english.find((v) => v.name.startsWith(`${name} `));
+  chosenVoice = (wanted && voices.find((v) => v.name.toLowerCase().includes(wanted.toLowerCase())))
+    || VOICE_PREFERENCE.map(byName).find(Boolean)
+    || english.find((v) => /female/i.test(v.name))
+    || english[0]
+    || null;
+}
+
+if (window.speechSynthesis) {
+  pickVoice();
+  // Chrome fills the voice list asynchronously.
+  speechSynthesis.addEventListener?.('voiceschanged', pickVoice);
+}
+
 function speak(text, onDone) {
   if (!speakToggle.checked || !window.speechSynthesis) {
     // Nothing to say aloud, but the pose still has to register. Snapping
@@ -125,12 +162,19 @@ function speak(text, onDone) {
   }
   speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(text);
-  utter.rate = 1.03;
+  if (!chosenVoice) pickVoice();
+  if (chosenVoice) {
+    utter.voice = chosenVoice;
+    utter.lang = chosenVoice.lang;
+  }
+  utter.rate = VOICE_RATE;
+  utter.pitch = VOICE_PITCH;
   utter.onend = onDone;
   utter.onerror = onDone;
   speechSynthesis.speak(utter);
   // Safety net: if the voice engine never fires onend, don't freeze the robot.
-  setTimeout(onDone, Math.min(2000 + text.length * 90, 20000));
+  // Scaled for the slower rate, so a long answer is not cut off mid-sentence.
+  setTimeout(onDone, Math.min(2500 + text.length * 110, 60000));
 }
 
 function once(fn) {
