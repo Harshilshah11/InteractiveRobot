@@ -1,13 +1,8 @@
 #!/usr/bin/env bash
 # One-command start on macOS / Linux: venv -> deps -> index -> server.
-#
-# With certs/ from scripts/local-domain.sh it serves
-# https://arnobotinteractiverobot.com; without them, http://127.0.0.1:8000.
-# Either way it listens on 127.0.0.1 only — reachable from this Mac alone.
+# Serves http://127.0.0.1:8000, on this Mac only.
 set -euo pipefail
 cd "$(dirname "$0")"
-
-DOMAIN="${ROBOT_DOMAIN:-arnobotinteractiverobot.com}"
 
 if [[ ! -d .venv ]]; then
   echo "Creating virtual environment..."
@@ -23,19 +18,7 @@ fi
 
 .venv/bin/python -m app.ingest
 
-if [[ -f certs/site.pem && -f certs/site.key ]]; then
-  # scripts/local-domain.sh forwards 127.0.0.1:443/80 to these two ports, so
-  # the plain https:// address works without a port number.
-  .venv/bin/python scripts/redirect_http.py "$DOMAIN" 8080 &
-  trap 'kill $! 2>/dev/null' EXIT
-  echo
-  echo "Open https://$DOMAIN"
-  echo
-  .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8443 \
-    --ssl-keyfile certs/site.key --ssl-certfile certs/site.pem
-else
-  echo
-  echo "Open http://127.0.0.1:8000   (run scripts/local-domain.sh for https://$DOMAIN)"
-  echo
-  .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
-fi
+echo
+echo "Open http://127.0.0.1:8000"
+echo
+.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000

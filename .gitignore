@@ -5,4 +5,3 @@ store/
 __pycache__/
 *.pyc
 .env
-certs/

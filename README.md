@@ -59,23 +59,6 @@ Creates the venv, installs dependencies, indexes `data/`, and serves
 <http://127.0.0.1:8000>. First run downloads the embedding model (~130 MB) and
 the Whisper speech model (~75 MB), once.
 
-### At https://arnobotinteractiverobot.com (this Mac only)
-
-```bash
-bash scripts/local-domain.sh   # once; asks for your Mac password
-bash run.sh
-```
-
-Strictly local: the name resolves to `127.0.0.1` on this Mac only and the app
-listens on `127.0.0.1` only, so nothing on the network or the internet can
-reach it. The microphone only works on `localhost` or over HTTPS, so the script
-makes a private certificate authority, issues a certificate for the name,
-trusts it in the System keychain and adds the name to `/etc/hosts`. Binding
-ports 443/80 needs root, so a loopback-only `pf` rule forwards them to the
-app's 8443/8080, re-applied at boot by a launch daemon. `run.sh` serves HTTPS
-there and redirects plain HTTP. `bash scripts/local-domain.sh --remove` undoes
-all of it.
-
 Then click the mic and ask *"who is the CTO?"* or *"which robot can climb walls?"*
 
 You can also deep-link a question: `http://127.0.0.1:8000/?q=what+is+NEXUS`
@@ -491,7 +474,6 @@ Every setting is an environment variable; nothing needs a code change.
 | `ROBOT_CLOSING_DELAY_MS` | `25000` | How long the quiet has to last first |
 | `ROBOT_WHISPER` | `auto` | `auto` = on if faster-whisper is installed; `on` / `off` |
 | `ROBOT_CONTACT_PHONE` / `_EMAIL` / `_WEB` | Arnobot's | Contact card and spoken referral |
-| `ROBOT_DOMAIN` | `arnobotinteractiverobot.com` | Name used by `run.sh` and `scripts/local-domain.sh` |
 | `ROBOT_OLLAMA` | `off` | `on` = rephrase answers with a local model |
 
 ---
@@ -542,7 +524,6 @@ app/
   ingest.py     data/ -> index
   main.py       FastAPI routes
 web/            animated SVG robot UI (no build step), favicon, product renders
-scripts/        local-domain.sh (HTTPS at arnobotinteractiverobot.com), redirect_http.py
 run.sh          macOS / Linux launcher (run.ps1 on Windows)
 data/           company.md — the knowledge base
 test_answers.py accuracy + refusal suite
