@@ -2,49 +2,80 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Arnobot Assistant</title>
 <!-- blank tab icon: an empty data URI stops the browser falling back to /favicon.ico -->
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
+<!-- Full-bleed: the assistant owns the whole screen, so the nav bar spans the
+     window and everything below it fills the remaining height. -->
+<header class="nav">
+  <!-- Two files rather than a CSS recolour: the mark is two-tone, and only
+       the brand's own white version keeps that legible on black. -->
+  <picture class="brand">
+    <source srcset="/static/assets/arnobot-logo-white.png" media="(prefers-color-scheme: dark)">
+    <img src="/static/assets/arnobot-logo-color.png" alt="Arnobot" width="1374" height="320">
+  </picture>
+
+  <div class="nav-title">
+    <h1>Assistant</h1>
+    <p>Robotics Redefined</p>
+  </div>
+
+  <div class="nav-actions">
+    <!-- reads /api/health: says nothing until it has actually connected, so
+         "Connecting" is the honest initial state -->
+    <div class="health" id="health" data-ok="pending">
+      <span class="dot" aria-hidden="true"></span>
+      <span id="healthText">Connecting…</span>
+    </div>
+
+    <label class="switch" title="Speak answers aloud">
+      <span class="switch-label">Voice</span>
+      <input type="checkbox" id="speak" role="switch" checked>
+      <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+    </label>
+
+    <button type="button" class="icon-btn" id="fullscreen" aria-label="Enter full screen" title="Full screen (F)">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" class="ic-expand">
+        <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>
+      </svg>
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" class="ic-collapse">
+        <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
 <div class="layout">
   <!-- Questions stay in one place all session, so the list is somewhere you
        look rather than something that appears. Filled by JS — see STARTERS. -->
-  <aside class="rail">
-    <div class="rail-group">
-      <p class="rail-label" id="chipsLabel">Ask me</p>
-      <div class="chips" id="chips"></div>
-    </div>
+  <aside class="rail" aria-label="Suggested questions">
+    <section class="group">
+      <h2 class="group-label" id="chipsLabel">Ask me</h2>
+      <div class="list chips" id="chips"></div>
+    </section>
 
     <!-- Fixed second group: the dynamic list above changes with every answer,
          so the standing topics need somewhere that does not move. -->
-    <div class="rail-group">
-      <p class="rail-label">More topics</p>
-      <div class="chips" id="topics">
+    <section class="group">
+      <h2 class="group-label">More topics</h2>
+      <div class="list" id="topics">
         <button type="button" class="chip">Where are you located?</button>
         <button type="button" class="chip">Where have your robots been deployed?</button>
         <button type="button" class="chip">Have you won any awards?</button>
         <button type="button" class="chip">How do I place an order?</button>
         <button type="button" class="chip">Are you hiring?</button>
       </div>
-    </div>
+    </section>
   </aside>
 
   <main>
-    <header class="head-bar">
-      <div class="titles">
-        <h1>Arnobot Assistant</h1>
-        <p>Robots, specifications and deployments</p>
-      </div>
-      <!-- reads /api/health: says nothing until it has actually connected, so
-           "Connecting" is the honest initial state -->
-      <div class="health" id="health" data-ok="pending">
-        <span id="healthText">Connecting…</span>
-      </div>
-    </header>
-
     <!-- The robot and what it says are one centred block; the product strip and
          composer stay pinned below whatever height that block ends up. -->
     <div class="centre">
@@ -52,6 +83,7 @@
       <!-- data-state drives every animation:
            idle | listening | thinking | speaking | clarifying | refusing -->
       <div class="stage" id="stage" data-state="idle">
+        <div class="halo" aria-hidden="true"></div>
         <svg class="robot" viewBox="0 0 240 280" aria-hidden="true">
           <defs>
             <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
@@ -150,21 +182,26 @@
 
     <form id="form" class="composer" autocomplete="off">
       <button type="button" id="mic" class="mic" aria-label="Speak">
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
           <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/>
           <path d="M19 11a7 7 0 0 1-14 0M12 18v3"/>
         </svg>
       </button>
-      <input id="q" placeholder="Type a question" aria-label="Question">
-      <button type="submit" class="send" aria-label="Send">Ask</button>
+      <div class="field">
+        <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" class="field-icon">
+          <circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/>
+        </svg>
+        <input id="q" placeholder="Ask about Arnobot, our robots or careers" aria-label="Question" enterkeyhint="send">
+        <button type="submit" class="send" aria-label="Send">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path d="M12 19V5M6 11l6-6 6 6"/>
+          </svg>
+        </button>
+      </div>
     </form>
 
-    <footer>
-      <label class="toggle"><input type="checkbox" id="speak" checked> Voice</label>
-      <!-- only appears when something is actually wrong -->
-      <span id="status" class="status"></span>
-      <span class="by">Robotics Redefined</span>
-    </footer>
+    <!-- only appears when something is actually wrong -->
+    <p id="status" class="status" role="status"></p>
   </main>
 </div>
 <script src="/static/app.js"></script>

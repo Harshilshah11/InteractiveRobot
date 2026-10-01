@@ -48,7 +48,7 @@ OOV_PENALTY = float(os.getenv("ROBOT_OOV_PENALTY", "0.85"))
 # Where to send anyone the knowledge base cannot help. Kept in one place so
 # the number and address are never restated inconsistently.
 CONTACT = os.getenv(
-    "ROBOT_CONTACT", "call +91 99255 12860 or email info.arnobot@gmail.com"
+    "ROBOT_CONTACT", "call +91 99255 12860 or email contact@arnobot.in"
 )
 
 # A refusal that ends the conversation is a worse product than one that hands

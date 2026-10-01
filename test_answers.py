@@ -77,11 +77,13 @@ SHOULD_ANSWER = [
     ("show me the product lineup", "Saibya"),
     # Business questions the source documents don't answer directly, handled
     # with an honest pointer instead of a refusal or an invented fact.
-    ("are you hiring", "info.arnobot"),
+    ("are you hiring", "arnobot.in/career"),
+    ("how do I apply for a job", "arnobot.in/apply"),
+    ("do you offer internships", "AI Research Intern"),
     ("how can I buy", "order"),
     ("can I get a demo", "demo"),
     ("do you export", "contact"),
-    ("do you provide support", "info.arnobot"),
+    ("do you provide support", "contact@arnobot.in"),
     ("are you ISO certified", "ISO"),
     ("what makes you unique", "safety"),
     ("where can I follow you", "LinkedIn"),
@@ -93,6 +95,21 @@ SHOULD_ANSWER = [
     ("NEXUS will not turn on", "recharge"),
     ("what temperature can NEXUS handle", "45 degrees"),
     ("can Saibya climb stairs", "stair"),
+    # Website facts (arnobot.in)
+    ("which robot can climb walls", "Altius"),
+    ("what are your office hours", "10 AM"),
+    ("does the robot need internet", "onboard"),
+    ("what technology do you use", "autonomy"),
+    ("do you have patents", "four"),
+    ("can I become a distributor", "partnership"),
+    ("what is your mission", "safer"),
+    ("what is your vision", "asset lifecycle"),
+    ("how much does NEXUS weigh", "3 kilogram"),
+    ("what is ATM used for", "towing"),
+    ("where are you located", "Satellite Road"),
+    ("why use robots instead of manual inspection", "continuous monitoring"),
+    ("what is your email", "contact@arnobot.in"),
+    ("contact", "99255"),
 ]
 
 # Asking about a product must produce the key data a buyer needs, not three

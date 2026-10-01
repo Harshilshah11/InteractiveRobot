@@ -171,6 +171,11 @@ function armClosing() {
 
 async function ask(question) {
   cancelClosing();
+  // A tapped or typed question while the mic is open replaces the spoken one.
+  if (listening) {
+    stopMicUi();
+    try { recognizer?.abort(); } catch (err) { /* already stopped */ }
+  }
   answerEl.classList.remove('greeting', 'none', 'asking');
   reveal(heardEl, question);
   answerEl.textContent = '';
@@ -234,33 +239,89 @@ productsEl.addEventListener('click', (e) => {
 
 
 // --- speech input ---------------------------------------------------------
+// The browser recogniser in single-shot mode gives up at the first pause —
+// often two or three seconds in, before a visitor has finished thinking of
+// the question. So it runs continuously, is restarted whenever the browser
+// ends it early, and *we* decide when the question is over: a pause after
+// speech, a longer wait if nothing has been said yet, and a hard cap.
+const SILENCE_AFTER_SPEECH_MS = 2500;
+const WAIT_FOR_SPEECH_MS = 9000;
+const MAX_LISTEN_MS = 30000;
+
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognizer = null;
+let committed = '';   // final text from earlier recogniser sessions
+let pending = '';     // text from the current session, final + interim
+let silenceTimer = null;
+let capTimer = null;
+
+function heardSoFar() {
+  return `${committed} ${pending}`.replace(/\s+/g, ' ').trim();
+}
+
+function armSilence(ms) {
+  clearTimeout(silenceTimer);
+  silenceTimer = setTimeout(finishListening, ms);
+}
+
+function stopMicUi() {
+  listening = false;
+  mic.classList.remove('on');
+  mic.setAttribute('aria-label', 'Speak');
+  clearTimeout(silenceTimer);
+  clearTimeout(capTimer);
+}
+
+// Ends the turn: ask whatever was heard, or say nothing was.
+function finishListening() {
+  if (!listening) return;
+  const question = heardSoFar();
+  stopMicUi();
+  try { recognizer?.abort(); } catch (err) { /* already stopped */ }
+  if (question) {
+    ask(question);
+  } else {
+    heardEl.textContent = '';
+    setState('idle');
+    setStatus("Didn't catch that — tap the mic and try again");
+  }
+}
 
 if (Recognition) {
   recognizer = new Recognition();
   recognizer.lang = 'en-IN';
   recognizer.interimResults = true;
-  recognizer.continuous = false;
+  recognizer.continuous = true;
+  recognizer.maxAlternatives = 1;
 
   recognizer.onresult = (e) => {
-    const result = e.results[e.results.length - 1];
-    heardEl.textContent = result[0].transcript;
-    if (result.isFinal) {
-      const question = result[0].transcript.trim();
-      if (question) ask(question);
-    }
+    let text = '';
+    for (let i = 0; i < e.results.length; i += 1) text += e.results[i][0].transcript;
+    pending = text;
+    heardEl.textContent = heardSoFar();
+    // Each new word pushes the deadline back; only a real pause ends the turn.
+    if (heardSoFar()) armSilence(SILENCE_AFTER_SPEECH_MS);
   };
   recognizer.onerror = (e) => {
-    listening = false;
-    mic.classList.remove('on');
+    // Silence and our own abort are not failures — the timers own the ending.
+    if (e.error === 'no-speech' || e.error === 'aborted') return;
+    stopMicUi();
     setState('idle');
-    setStatus(e.error === 'no-speech' ? "didn't catch that" : `mic: ${e.error}`);
+    setStatus(
+      e.error === 'not-allowed' || e.error === 'service-not-allowed'
+        ? 'Microphone access is blocked — allow it in the browser settings'
+        : `Microphone error: ${e.error}`,
+    );
   };
   recognizer.onend = () => {
-    listening = false;
-    mic.classList.remove('on');
-    if (stage.dataset.state === 'listening') setState('idle');
+    if (!listening) {
+      if (stage.dataset.state === 'listening') setState('idle');
+      return;
+    }
+    // The browser ended the session on its own: keep what it heard and carry on.
+    committed = heardSoFar();
+    pending = '';
+    try { recognizer.start(); } catch (err) { finishListening(); }
   };
 }
 
@@ -291,30 +352,60 @@ async function startRecording() {
 }
 
 mic.addEventListener('click', async () => {
+  // Tapping again means "I'm done" — send what was heard straight away.
   if (listening) {
-    listening = false;
-    mic.classList.remove('on');
-    if (offlineStt) recorder?.stop(); else recognizer?.stop();
+    if (offlineStt) { stopMicUi(); recorder?.stop(); } else finishListening();
     return;
   }
   try {
     cancelClosing();
-    speechSynthesis?.cancel();
+    window.speechSynthesis?.cancel();
     listening = true;
+    committed = '';
+    pending = '';
     mic.classList.add('on');
+    mic.setAttribute('aria-label', 'Stop and send');
     setState('listening');
     setStatus();
     answerEl.classList.remove('greeting', 'none', 'asking');
     heardEl.textContent = '';
     answerEl.textContent = '';
-    if (offlineStt) await startRecording(); else recognizer.start();
+    if (offlineStt) {
+      await startRecording();
+      capTimer = setTimeout(() => { stopMicUi(); recorder?.stop(); }, MAX_LISTEN_MS);
+    } else {
+      recognizer.start();
+      armSilence(WAIT_FOR_SPEECH_MS);
+      capTimer = setTimeout(finishListening, MAX_LISTEN_MS);
+    }
   } catch (err) {
-    listening = false;
-    mic.classList.remove('on');
+    stopMicUi();
     setState('idle');
-    setStatus('microphone unavailable');
+    setStatus('Microphone unavailable');
   }
 });
+
+// --- full screen ----------------------------------------------------------
+// Built to stand on a kiosk screen: one tap (or F) hides the browser chrome.
+const fullscreenBtn = document.getElementById('fullscreen');
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) document.exitFullscreen?.();
+  else document.documentElement.requestFullscreen?.().catch(() => {});
+}
+
+fullscreenBtn.addEventListener('click', toggleFullscreen);
+document.addEventListener('fullscreenchange', () => {
+  fullscreenBtn.setAttribute(
+    'aria-label', document.fullscreenElement ? 'Exit full screen' : 'Enter full screen',
+  );
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key.toLowerCase() === 'f' && e.target === document.body) toggleFullscreen();
+});
+// Browsers without the API (iPhone Safari) already run full screen from the
+// home screen, so the button would do nothing there.
+if (!document.documentElement.requestFullscreen) fullscreenBtn.hidden = true;
 
 // --- boot -----------------------------------------------------------------
 function renderProducts(list) {
@@ -324,13 +415,20 @@ function renderProducts(list) {
       card.type = 'button';
       card.className = 'product';
       card.dataset.ask = product.ask;
+      const badge = document.createElement('span');
+      badge.className = 'p-badge';
+      badge.setAttribute('aria-hidden', 'true');
+      badge.textContent = product.name.charAt(0).toUpperCase();
+      const text = document.createElement('span');
+      text.className = 'p-text';
       const name = document.createElement('span');
       name.className = 'p-name';
       name.textContent = product.name;
       const kind = document.createElement('span');
       kind.className = 'p-kind';
       kind.textContent = product.kind;
-      card.append(name, kind);
+      text.append(name, kind);
+      card.append(badge, text);
       return card;
     }),
   );

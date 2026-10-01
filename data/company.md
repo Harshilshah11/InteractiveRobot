@@ -8,8 +8,9 @@ I also cover awards, pilot deployments, clients, pricing, demos, orders and care
 
 ## About the company
 also: who are you, what does arnobot do, tell me about the company, what is arnobot, introduce yourself, about arnobot, company overview, company profile, what is this company, tell me about your company
-Arnobot Private Limited is a robotics engineering company that designs and builds customised autonomous ground vehicles, remote operated vehicles and robotic automation for industrial, defence and inspection applications.
-The company builds rugged, deployable robots for harsh or hard-to-reach environments, and its tagline is "Robotics Redefined".
+Arnobot Private Limited is an Indian robotics and automation company building advanced unmanned systems for defence, industrial, maritime and critical infrastructure needs.
+It designs and builds rugged robots for the jobs that are still done by hand, in the places people should not have to go, and its tagline is "Robotics Redefined".
+Arnobot's robots are made in India and built for environments humans cannot enter.
 
 ## When was the company founded
 also: how old is the company, founding year, when did you start, established, incorporated
@@ -18,39 +19,53 @@ The team's robotics journey began earlier, during their academic years, from 202
 
 ## Where the company is located
 also: which city, where are you based, address, headquarters, office location, how do I reach you, directions
-Arnobot is headquartered in Ahmedabad, Gujarat, India, at Shivranjini, Ahmedabad 380015.
-The registered address is G2 Parul Flats, Ahmedabad, Gujarat, IN 380015.
+Arnobot is headquartered in Ahmedabad, Gujarat, India.
+The head office is at G-2, Parul Apartments, Satellite Road, Ahmedabad 380015, near Shivranjini.
 
 ## Social media and online presence
 also: social media, linkedin, instagram, follow you, online profiles, handles, where can I follow you
-Arnobot is on LinkedIn as company/arnobot and on Instagram as robot_arnobot.
+Arnobot is on LinkedIn as company/arnobot and on Instagram as robots_arnobot.
 The company website is www.arnobot.in.
 
 ## Autonomy and control
 also: is it autonomous, can it be automated, self driving, remote controlled, is it manual, semi autonomous, teleoperation, how is it controlled, driverless
+Arnobot's platforms are designed to operate from remote control to semi-autonomous to fully autonomous.
 Saibya and ATM are available in remote-controlled, semi-autonomous and fully autonomous variants.
-NEXUS is operated by remote control with a live camera feed.
+NEXUS is operated by encrypted remote tactical control with a live camera feed.
 Altius uses a wireless radio-frequency drive with online data monitoring.
 
 ## Contact details
-also: phone number, email, how to contact you, helpdesk, get in touch, enquiry, website, do you provide support, customer support, reach out, talk to someone, contact number, mail id, brochure, catalogue request, social media, linkedin, instagram, follow you
-You can call Arnobot on +91 99255 12860 or email info.arnobot@gmail.com.
-The website is www.arnobot.in.
+also: phone number, email, what is your email, email address, email id, contact, how to contact you, how do I contact you, how can I contact you, contact us, helpdesk, get in touch, enquiry, website, do you provide support, customer support, reach out, talk to someone, contact number, mail id, brochure, catalogue request, social media, linkedin, instagram, follow you
+You can call Arnobot on +91 99255 12860 or email contact@arnobot.in.
+The website is www.arnobot.in, and its contact page has forms for consultations, demos, site assessments, partnerships and defence procurement.
+
+## Office hours
+also: office hours, working hours, when are you open, opening time, business hours, are you open on sunday, timings, how fast do you reply, response time
+Arnobot's office is open Monday to Saturday, 10 AM to 7 PM India Standard Time.
+Enquiries are answered within one business day.
+
+## Partnerships and distribution
+also: partnership, distributor, dealer, reseller, can I become a distributor, collaborate, partner with you, dealership, defence procurement, site assessment, consultation
+Arnobot welcomes partnership and distribution enquiries, as well as defence procurement, consultations and site assessments.
+Choose the matching enquiry type on the enquiry form at www.arnobot.in.
 
 ## Company vision
 also: what is your vision, long term goal, what do you want to achieve
-Arnobot envisions a world where robotics unlocks automation in hazardous and inaccessible environments.
+Arnobot's vision is to become a global leader in robotics-driven asset lifecycle management.
+It envisions a world where robotics unlocks automation in hazardous and inaccessible environments.
 The goal is to make industries safer, more efficient and more resilient by preventing human risk and minimising downtime through precision-engineered solutions.
 
 ## Company mission
 also: what is your mission, purpose, why does the company exist
-Arnobot's mission is to empower organisations with customisable, deployable robotic platforms that integrate seamlessly into real workflows.
+Arnobot's mission is to make industrial maintenance safer, smarter and more efficient through intelligent robotics.
+It empowers organisations with customisable, deployable robotic platforms that integrate seamlessly into real workflows.
 This drives productivity and innovation across the industrial, defence and maritime sectors.
 
 ## Team size
 also: how many employees, how big is the team, staff, headcount, how many people work there
-Arnobot is led by a team of seven professionals.
+Arnobot is led by a team of seven professionals, small enough that everybody's work has a name attached to it.
 The team combines expertise in robotics engineering, product design, system integration and strategic management.
+The company is growing, and its open roles are listed at www.arnobot.in/career.
 
 ## Core strengths
 also: why choose you, what makes you different, what makes you unique, why should I pick you, advantages, benefits, USP, strengths, competitive edge, capabilities, what are you good at
@@ -63,9 +78,32 @@ also: what are your skills, engineering capability, technical expertise, what ca
 Arnobot's expertise covers mechanical engineering, remote operated vehicles, autonomous navigation on sandy and harsh terrain, and power optimisation.
 The company has end-to-end in-house capability spanning design and manufacturing, electronics research and development, software development and rapid prototyping.
 
+## Technology and autonomy stack
+also: what technology do you use, technology, how do your robots work, autonomy stack, software, ground control station, GCS, autonomy engine, how is the robot controlled, architecture, AI
+Arnobot's robots run on a four-layer autonomy stack: a ground control station, an autonomy engine, real-time control and the robot hardware.
+The ground control station is the human layer for mission planning and monitoring, and the autonomy engine runs on the robot, fuses the sensors, holds the map and decides the next move.
+The real-time control layer reacts thousands of times a second, deterministically, while the hardware layer changes from platform to platform.
+
+## Sensors and navigation
+also: what sensors, lidar, gps, does it work without gps, indoor navigation, mapping, localisation, computer vision, object detection, does it need internet, cloud, onboard processing, how does it navigate, obstacle avoidance
+Laser, camera and inertial data are fused on the robot, and detection runs onboard, not in the cloud.
+Localisation is centimetre-grade with a satellite fix, and without one the robot builds its own map, underground, indoors or under steel.
+Missions are defined as an area to cover rather than joystick input, and the robot replans around obstacles and resumes its pass.
+
+## Reliability and serviceability
+also: is it reliable, durability, dust proof, maintenance, servicing, spare parts, how do you service it, what if it fails, failsafe, safety system, rugged
+Arnobot's robots are sealed for the site against dust, water and washdown.
+Faults stay local, and the safety systems bring the vehicle to a safe halt.
+The robots can be serviced with standard tooling, and Arnobot supports customers with long-term contracts and AMC.
+
+## Robots versus manual inspection
+also: why use robots, robot vs human, manual inspection, traditional inspection, benefits of robots, return on investment, ROI, cost savings, why not do it manually, advantages over manual
+Compared with traditional inspection, an Arnobot system removes human safety risk and replaces periodic checks with continuous monitoring.
+It replaces manual records with AI-driven analytics, reduces downtime, and turns recurring labour cost into a long-term return on investment.
+
 ## Facility and manufacturing capacity
 also: factory, workshop, production capacity, how many robots can you make, lab, prototyping, manufacturing, lead time, delivery time, how long to build, output per month, throughput
-Arnobot operates a facility in Ahmedabad with a prototyping lab and workshop supporting design, testing and deployment.
+Arnobot operates an in-house facility in Ahmedabad with spaces for design, assembly, electronics, prototyping and software development, supporting testing and deployment.
 Production capacity is up to three robots per month for heavy units and up to five robots per month for small robots.
 
 # Founders
@@ -106,7 +144,7 @@ Altius carries up to 30 kilograms vertically, and NEXUS carries a modular payloa
 
 ## Saibya overview
 also: tell me about saibya, what is saibya, saibya robot, UGV, explain saibya, saibya details, saibya summary, describe saibya
-Saibya is Arnobot's rugged, high-payload unmanned ground vehicle for defence logistics, hazardous material transport, industrial inspection and mission-critical ground operations.
+Saibya is Arnobot's heavy-duty, rugged, high-payload unmanned ground vehicle for defence logistics, hazardous material transport, industrial inspection and mission-critical ground operations.
 It is engineered for reliable payload transport across challenging terrain such as slopes, stairs and desert sand.
 Saibya is available in remote-controlled, semi-autonomous and fully autonomous variants.
 
@@ -118,14 +156,15 @@ It runs on a 24 volt 50 amp-hour NMC battery and an autonomous variant is availa
 
 ## Saibya features
 also: can saibya climb stairs, stair climbing, saibya drive, is it wireless, rugged, EV mobility, saibya design, saibya capability, what can saibya do, saibya key features
-Saibya is capable of stair climbing and is built on a rugged design with EV-based mobility and wireless drive.
+Saibya has a 4 by 4 high-traction drive, climbs stairs, and offers remote, semi-autonomous and fully autonomous control.
+It supports modular attachments and is built on a rugged design with EV-based mobility and wireless drive.
 It handles slopes, stairs and desert sand, and supports access to further advancements and attachments.
 It is driven by a Jumper T14 radio controller and carries an onboard electronics compartment with UART and 12 volt and 24 volt power for customer payloads.
 
 ## Saibya use cases
 also: what is saibya used for, saibya applications, saibya missions, saibya tasks, where can saibya be used, saibya jobs
-Saibya is used for surveillance, logistics, towing, grass cutting and mine laying.
-It also suits defence logistics, industrial inspection and search and rescue operations.
+Saibya is used for defence logistics and supply transport, ammunition carriage, industrial material handling, towing and surveillance.
+It also suits disaster response, search and rescue, industrial inspection, grass cutting and mine laying.
 
 ## Saibya industries
 also: which industry uses saibya, saibya sectors, who uses saibya, saibya customers, where is saibya deployed, saibya market
@@ -137,6 +176,7 @@ It suits any site where heavy material has to be moved across ground that is uns
 also: what is ATM, any terrain machine, tell me about ATM, atm robot, explain atm, atm details, describe atm, atm summary
 ATM stands for Any Terrain Machine.
 It is a rugged, high-payload unmanned ground vehicle designed for defence logistics, hazardous material transport, industrial inspection and mission-critical ground operations.
+It is built to move heavy loads across worksite terrain where lighter platforms cannot operate.
 It is Arnobot's largest platform and carries the heaviest payload of the range.
 
 ## ATM specifications
@@ -150,10 +190,11 @@ also: atm capability, what can atm do, atm key features, atm range, atm remote, 
 ATM is remote operated with a Jumper T14 controller at up to 1 kilometre line of sight and 400 metres non line of sight.
 It runs for about 4 hours on a full charge and recharges in about 3 hours.
 It is rated IP 42, operates between 10 and 50 degrees Celsius, and uses front and rear suspension with steering for stability under load.
+ATM supports modular attachments and sends real-time telemetry and a video feed, with remote and autonomous control.
 
 ## ATM use cases
 also: what is atm used for, atm applications, atm missions, atm tasks, where can atm be used, atm jobs
-ATM is used for surveillance, logistics, towing and grass cutting.
+ATM is used for heavy material transport and logistics, towing, industrial site operations, surveillance and grass cutting.
 It also suits defence logistics, hazardous material transport and mission-critical ground operations.
 
 ## ATM industries
@@ -165,12 +206,12 @@ It suits sites that need the heaviest loads moved without putting a driver in th
 ## NEXUS overview
 also: what is nexus, tell me about nexus, nano robot, nexus robot, small robot, can nexus flip over, upside down, invertible, does it work when flipped, rollover, explain nexus, describe nexus, nexus details
 NEXUS stands for Nano Exploration and Utility System.
-It is a compact, rugged robot designed for exploration, surveillance and utility operations in restricted and confined spaces.
+It is a lightweight, portable tactical robot for rapid tactical reconnaissance, surveillance and utility operations in confined and high-risk spaces.
 NEXUS is invertible and drives seamlessly upside down, which lets it keep working after a rollover.
 
 ## NEXUS specifications
 also: nexus size, nexus weight, nexus range, nexus camera, nexus payload, nexus temperature, nexus specs, nexus technical data, how much can nexus carry, nexus capacity, nexus dimensions
-NEXUS measures 350 x 330 x 140 mm, weighs 1.5 kilograms, and uses four wheel drive with standard wheels or optional custom chain tracks.
+NEXUS measures 350 x 330 x 140 mm, is in the 3 kilogram ultra-lightweight class, and uses four wheel drive with standard wheels or optional custom chain tracks.
 Its remote control range is 300 metres line of sight and 100 metres non line of sight.
 It withstands temperatures up to 60 degrees Celsius under load for 30 minutes and carries a modular payload of up to 2 kilograms.
 An onboard HD camera delivers a live digital video feed to a connected device.
@@ -179,12 +220,14 @@ An onboard HD camera delivers a live digital video feed to a connected device.
 also: nexus capability, what can nexus do, nexus key features, nexus tracks, nexus wheels, nexus light, nexus camera feed, nexus modular, nexus battery life
 NEXUS is invertible and keeps driving upside down, so a rollover does not end the mission.
 Its wheels and chain tracks are detachable and swapped to match the terrain, and the payload bay is modular.
-It carries an HD camera for a live feed, a switchable light, and runs about 20 minutes on its LiPo battery under a SkyDroid T10 remote.
+It carries an HD camera for a live feed, a switchable light, and runs about 20 minutes on its LiPo battery under encrypted remote tactical control from a SkyDroid T10 transmitter.
+It deploys rapidly and has been trialled on rough terrain and in wall drops.
 
 ## NEXUS use cases
 also: what is nexus used for, nexus applications, tactical robot, nexus missions, nexus tasks, where can nexus be used, nexus jobs
 NEXUS is built for protection forces as a tactical surveillance machine, scanning hazardous areas before entry to minimise risk.
-It suits urban reconnaissance, infrastructure inspection and defence applications where larger unmanned ground vehicles cannot operate.
+It is used for defence surveillance, tactical and urban reconnaissance, indoor security inspection, border monitoring and scouting high-risk areas.
+It suits infrastructure inspection and defence applications where larger unmanned ground vehicles cannot operate.
 
 ## NEXUS industries
 also: which industry uses nexus, nexus sectors, who uses nexus, nexus customers, where is nexus deployed, nexus market
@@ -193,8 +236,8 @@ It is intended for defence personnel, security teams and trained operators who n
 It suits confined areas such as ducts, culverts, rubble, tunnels and building interiors.
 
 ## Altius overview
-also: what is altius, climbing robot, tell me about altius, wall climbing, vertical robot, explain altius, describe altius, altius details
-Altius is Arnobot's vertical climbing robot, built to access vertical and hard-to-reach structures.
+also: what is altius, climbing robot, tell me about altius, wall climbing, which robot can climb walls, can a robot climb a ship hull, vertical robot, explain altius, describe altius, altius details
+Altius is Arnobot's vertical climbing robot, built for inspection, cleaning and monitoring of high and hard-to-reach places on ferromagnetic surfaces such as steel.
 It is used for NDT-ready cleaning, inspection and maintenance on vertical surfaces, improving coverage and worker safety in high-risk environments.
 It uses advanced adhesion technology for secure grip and supports multi-payload attachments for sensors, cameras and other equipment.
 
@@ -206,13 +249,14 @@ It runs on AC 230 volt 10 amp power and has an analog 5 megapixel camera, with a
 
 ## Altius features
 also: altius capability, is altius waterproof, altius monitoring, ip rating, what is IP65, ip 65, dust and water protection, weather resistant, cloud platform, what can altius do, altius key features, altius tools
-Altius supports multiple payloads, EV-based mobility and wireless radio frequency drive.
+Altius grips steel surfaces magnetically for secure climbing, supports interchangeable tooling, and transmits real-time video.
+It has a rugged industrial build, EV-based mobility and a wireless radio frequency drive.
 It is waterproof up to IP-65, takes continuous power supply from the station, and offers online data monitoring through a cloud-based platform.
 Its modular tool capability lets a cleaning, painting or inspection head be mounted on the tensioner assembly for the job at hand.
 
 ## Altius use cases
 also: what is altius used for, altius applications, altius missions, altius tasks, where can altius be used, altius jobs
-Altius is used for cleaning, painting, inspection and sand blasting.
+Altius is used for infrastructure inspection, industrial cleaning at height, surface painting and sand blasting, industrial surveillance and critical asset mapping.
 It performs NDT-ready cleaning and maintenance on hulls, tanks, vessels and other vertical structures.
 
 ## Altius industries
@@ -226,12 +270,18 @@ It suits shipyards, refineries, storage tanks and any structure where rope acces
 ## Awards and recognition
 also: have you won any awards, achievements, recognition, prizes, when did you win awards, which awards, how many awards, honours, accolades
 Arnobot won the Startup Maharathi Award in the B2B and Precision Manufacturing category at Startup Mahakumbh, New Delhi, in 2025.
-It was named Best Robotics Startup 2025 by the WSRO Community at Science City, Ahmedabad.
-It also received recognition as a defence-based startup at the Vibrant Gujarat Regional Conference in Rajkot in January 2026.
+It was named Robotics Startup of the Year 2025 by the World STEM and Robotics Olympiad community at Science City, Ahmedabad.
+It also received the Pride of Gujarat recognition in the Defence category at Vibrant Gujarat 2026, at the Regional Conference in Rajkot in January 2026.
 
 ## Publications
 also: media coverage, magazine, press, have you been published
-Arnobot was featured in the January 2026 volume of Efficient Manufacturing Magazine.
+Arnobot was featured in the January 2026 volume of Efficient Manufacturing Magazine, and has two publications to its name.
+It has also been featured on Gujarat First News and in City Bhaskar.
+
+## Patents and intellectual property
+also: patents, do you have patents, intellectual property, IP filed, how many patents, innovations, proprietary technology
+Arnobot has filed four intellectual property applications.
+The company has also applied for a trademark under the Trade Marks Act, 1999.
 
 ## Certifications and registrations
 also: are you registered, compliance, msme, startup india, gst, iec, iso, are you ISO certified, iso 9001, trademark, licences, legal registration, dpiit, udyam
@@ -251,7 +301,8 @@ Arnobot's clients include Stable Dynamics and the Indian Army 21 Engineer Regime
 
 ## Industries served
 also: which sectors, target market, who buys your robots, customer segments
-Arnobot serves defence, oil and gas, power plants, shipyards, infrastructure companies and disaster response agencies.
+Arnobot serves defence and security, maritime and shipbuilding, industrial operations, critical infrastructure and solar projects.
+It also works with oil and gas, power plants and disaster response agencies.
 Applications span cleaning, inspection, payload carrying, surveillance, defence and agriculture.
 
 ## Problem the company solves
@@ -264,31 +315,55 @@ Arnobot's unmanned vehicles give operator-controlled access to those areas, remo
 also: how much does it cost, what is the price, saibya price, altius cost, nexus price, atm cost, how expensive, quotation, quote, budget, rate card, rupees, cost of the robot, price list
 Arnobot does not publish prices for its robots.
 Pricing depends on the configuration, payload and level of autonomy required, so each system is quoted individually.
-For a quotation, call +91 99255 12860 or email info.arnobot@gmail.com.
+For a quotation, call +91 99255 12860 or email contact@arnobot.in.
 
 ## How to buy or place an order
 also: how can I buy, how do I order, purchase process, where to buy, how to procure, place an order, buying process, tender, procurement, sales enquiry
 Arnobot sells directly and through tenders, its website and exhibitions.
-To start an order or discuss requirements, call +91 99255 12860 or email info.arnobot@gmail.com.
+To start an order or discuss requirements, call +91 99255 12860 or email contact@arnobot.in.
 Each system is configured to the customer's requirement before a quotation is issued.
 
 ## Requesting a demo
 also: can I get a demo, do you offer demo, demonstration, trial, can I see it working, site visit, proof of concept, pilot request
 Arnobot runs demonstrations and pilot deployments for prospective customers, and has done so across shipyards, power plants and defence units.
-To arrange a demo or a site visit, call +91 99255 12860 or email info.arnobot@gmail.com.
+To arrange a demo or a site visit, call +91 99255 12860 or email contact@arnobot.in.
 The website www.arnobot.in also lists demos and platform enquiries.
 
 ## Custom and international requirements
 also: do you export, international shipping, overseas, outside india, do you ship abroad, custom robot, bespoke, tailor made, can you build to spec, RFP
 Arnobot builds customised robotic systems to client requirements and responds to client RFPs, with rapid customisation supported by in-house design and manufacturing.
 Export and delivery outside India are not covered in Arnobot's published material, so please contact the company directly to confirm.
-Call +91 99255 12860 or email info.arnobot@gmail.com.
+Call +91 99255 12860 or email contact@arnobot.in.
 
 ## Careers and hiring
-also: are you hiring, jobs, careers, vacancy, internship, can I join, work with you, recruitment, apply for a job
-Arnobot does not publish open positions in its public material.
-The company is a team of seven professionals working in robotics engineering, product design, system integration and strategic management.
-For career enquiries, email info.arnobot@gmail.com.
+also: are you hiring, jobs, careers, vacancy, vacancies, can I join, work with you, recruitment, apply for a job, open positions, open roles, job openings, what roles are open, current openings
+Yes, Arnobot is hiring, and the open roles are listed on the careers page at www.arnobot.in/career.
+The full-time roles are Robotics Engineer, Embedded Systems Developer, Computer Vision Engineer, Autonomy Engineer and Business Development Manager, and there is also a six-month AI Research Intern position.
+All roles are based in Ahmedabad, and the Computer Vision Engineer role can be hybrid.
+To apply, take the step-by-step quiz and questionnaire at www.arnobot.in/apply.
+
+## How to apply for a job
+also: how do I apply, application process, job quiz, career quiz, application quiz, technical assessment, apply online, application form
+Applications are made through the step-by-step quiz and questionnaire at www.arnobot.in/apply.
+You upload your resume, confirm the details read from it, pick a role, and take a short technical assessment in the same sitting, which takes around twenty minutes end to end.
+
+## Interview and hiring process
+also: interview process, interview rounds, hiring process, recruitment process, selection process, what happens after I apply, how long does hiring take, technical round, intro call
+After you apply through the quiz at www.arnobot.in/apply, you hear yes or no within five business days.
+Next is a 30-minute intro call about what you have built and what Arnobot is building, then one live technical session working through a real problem from Arnobot's backlog, with no puzzles or whiteboard trivia.
+The last step is a workshop visit to meet the team and drive a robot, and a decision is made within a week.
+
+## Internships
+also: internship, intern, do you offer internships, student internship, research internship, ai intern, summer internship, can students join
+Arnobot is hiring an AI Research Intern in Ahmedabad for six months.
+The intern spends six months on one hard problem, with a mentor and a robot to test it on.
+To apply, take the quiz and questionnaire at www.arnobot.in/apply.
+
+## Working at Arnobot
+also: what is it like to work at arnobot, company culture, work culture, why join arnobot, team culture, work environment, what will I work on
+Arnobot is a hands-on robotics team building autonomous platforms for hazardous environments, critical infrastructure and defence.
+The team is small enough that everybody's work has a name attached to it, and the robots are tested in the real world, in dust, water, darkness and bad signal.
+Every application is read by a person, with no silent pipelines, and the open roles are at www.arnobot.in/career.
 
 ## Business model
 also: how do you make money, revenue, pricing model, services offered
@@ -299,7 +374,7 @@ It reaches customers through direct sales, tenders, its website and exhibitions,
 
 ## NEXUS weight and runtime
 also: how heavy is nexus, nexus weight, nexus battery, how long does nexus run, runtime, nexus warranty
-NEXUS weighs 1.5 kilograms and runs on a LiPo battery with a runtime of about 20 minutes.
+NEXUS is a 3 kilogram ultra-lightweight platform and runs on a LiPo battery with a runtime of about 20 minutes.
 It carries an HD camera and is operated by a remote tactical control system.
 The warranty period is one year, and the warranty is void if the check sheet is not maintained.
 
