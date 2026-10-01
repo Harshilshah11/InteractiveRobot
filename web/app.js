@@ -17,10 +17,12 @@ const healthText = document.getElementById('healthText');
 const form = document.getElementById('form');
 const input = document.getElementById('q');
 const mic = document.getElementById('mic');
+const sendBtn = form.querySelector('.send');
 const speakToggle = document.getElementById('speak');
 const statusEl = document.getElementById('status');
 
 let listening = false;
+let listenStartedAt = 0;
 
 const CAPTIONS = {
   idle: '',
@@ -57,6 +59,8 @@ const BUSY = new Set(['listening', 'thinking', 'speaking']);
 
 function setState(state) {
   stage.dataset.state = state;
+  // mirrored on <body> so the answer card and composer can follow the state
+  document.body.dataset.state = state;
   caption.textContent = CAPTIONS[state] ?? '';
   // The rail is a fixture — dimmed while the robot works, never removed.
   chips.classList.toggle('dim', BUSY.has(state));
@@ -70,6 +74,7 @@ function renderChips(list, label) {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'chip';
+      button.style.setProperty('--i', items.indexOf(text));
       button.textContent = text;
       return button;
     }),
@@ -113,6 +118,23 @@ function reveal(el, text) {
   el.classList.add('in');
 }
 
+// Answers settle in word by word. Spans carry only the timing; the text is
+// unchanged, so screen readers and copy-paste see one plain sentence.
+function revealWords(el, text) {
+  const words = text.split(/(\s+)/);
+  const step = Math.max(8, Math.min(28, 1100 / Math.max(1, words.length / 2)));
+  let n = 0;
+  el.replaceChildren(...words.map((w) => {
+    if (/^\s+$/.test(w)) return document.createTextNode(w);
+    const span = document.createElement('span');
+    span.className = 'w';
+    span.style.setProperty('--d', `${(n += 1) * step}ms`);
+    span.textContent = w;
+    return span;
+  }));
+  el.classList.remove('in');
+}
+
 // Speech synthesis uses the OS voices — nothing leaves the machine.
 // Browsers cannot reach Siri itself, so this picks a female voice from what is
 // installed: Karen (Apple, Australian English) is the chosen voice; the rest
@@ -153,12 +175,36 @@ if (window.speechSynthesis) {
   speechSynthesis.addEventListener?.('voiceschanged', pickVoice);
 }
 
+// Every spoken line is a numbered turn. Cancelling speech (a new question, the
+// mic, the stop button) fires the old line's end events late; the number lets
+// them be ignored, so a stale callback can never knock the robot out of the
+// pose it is in now.
+let speechTurn = 0;
+
+function setSpeaking(on) {
+  document.body.classList.toggle('is-speaking', on);
+  sendBtn.setAttribute('aria-label', on ? 'Stop speaking' : 'Send');
+}
+
+function cancelSpeech() {
+  speechTurn += 1;
+  window.speechSynthesis?.cancel();
+  setSpeaking(false);
+}
+
 function speak(text, onDone) {
+  const turn = ++speechTurn;
+  const finish = () => {
+    if (turn !== speechTurn) return;
+    setSpeaking(false);
+    onDone();
+  };
+  setSpeaking(true);
   if (!speakToggle.checked || !window.speechSynthesis) {
     // Nothing to say aloud, but the pose still has to register. Snapping
     // straight back to idle means the clarifying and refusing faces are never
     // actually seen with voice off — so hold for roughly a read.
-    setTimeout(onDone, Math.min(1400 + text.length * 14, 7000));
+    setTimeout(finish, Math.min(1400 + text.length * 14, 7000));
     return;
   }
   speechSynthesis.cancel();
@@ -170,12 +216,28 @@ function speak(text, onDone) {
   }
   utter.rate = VOICE_RATE;
   utter.pitch = VOICE_PITCH;
-  utter.onend = onDone;
-  utter.onerror = onDone;
+  utter.onend = finish;
+  utter.onerror = finish;
   speechSynthesis.speak(utter);
   // Safety net: if the voice engine never fires onend, don't freeze the robot.
   // Scaled for the slower rate, so a long answer is not cut off mid-sentence.
-  setTimeout(onDone, Math.min(2500 + text.length * 110, 60000));
+  setTimeout(finish, Math.min(2500 + text.length * 110, 60000));
+}
+
+// The stop button: silence the answer and hand the floor back.
+const READY_LINE = 'How can I help you?';
+
+function stopSpeaking() {
+  cancelSpeech();
+  cancelClosing();
+  heardEl.textContent = '';
+  answerEl.classList.remove('none', 'asking');
+  answerEl.classList.add('greeting');
+  reveal(answerEl, READY_LINE);
+  fitAnswer();
+  renderChips(null);
+  setState('speaking');
+  speak(READY_LINE, () => setState('idle'));
 }
 
 function once(fn) {
@@ -216,6 +278,8 @@ function armClosing() {
 
 async function ask(question) {
   cancelClosing();
+  cancelSpeech();
+  cancelTranscription();
   speechEl.classList.remove('greeting-mode');
   // A tapped or typed question while the mic is open replaces the spoken one.
   if (listening) {
@@ -223,8 +287,9 @@ async function ask(question) {
     stopLevelWatch();
     try { recognizer?.abort(); } catch (err) { /* already stopped */ }
     if (recorder && recorder.state !== 'inactive') {
-      recorder.onstop = () => recorder.stream.getTracks().forEach((t) => t.stop());
-      recorder.stop();
+      const rec = recorder;
+      recorder = null;                     // its onstop now sees it was superseded
+      rec.stop();
     }
   }
   answerEl.classList.remove('greeting', 'none', 'asking');
@@ -248,7 +313,7 @@ async function ask(question) {
     return;
   }
 
-  reveal(answerEl, data.answer);
+  revealWords(answerEl, data.answer);
   answerEl.classList.toggle('none', data.mode === 'refer');
   answerEl.classList.toggle('asking', data.mode === 'clarify');
   fitAnswer();
@@ -268,6 +333,11 @@ async function ask(question) {
 
 form.addEventListener('submit', (e) => {
   e.preventDefault();
+  // While the robot is talking, the send arrow is a stop button.
+  if (document.body.classList.contains('is-speaking')) {
+    stopSpeaking();
+    return;
+  }
   const question = input.value.trim();
   if (!question) return;
   input.value = '';
@@ -398,16 +468,20 @@ if (Recognition) {
 // service, Firefox has none — so the mic works in every browser. The same
 // rules end the turn: a pause after speech, a wait for speech, and a cap —
 // measured here from the microphone level, since nothing transcribes live.
-const SPEECH_LEVEL = 0.025;    // RMS above the noise floor that counts as voice
+const MIN_SPEECH_MS = 300;     // this much voice before a turn counts as speech
 let recorder = null;
 let clips = [];
 let heardVoice = false;
 let levelTimer = null;
 let audioCtx = null;
+let micStarting = false;       // getUserMedia is in flight: ignore extra taps
+let sttSeq = 0;                // only the newest transcription may ask
+let sttAbort = null;
 
 function stopLevelWatch() {
   clearInterval(levelTimer);
   levelTimer = null;
+  mic.style.setProperty('--level', 0);
   audioCtx?.close().catch(() => {});
   audioCtx = null;
 }
@@ -420,57 +494,93 @@ function finishRecording() {
   if (recorder && recorder.state !== 'inactive') recorder.stop();
 }
 
+// Drops an unfinished transcription, so a newer turn is never overtaken by it.
+function cancelTranscription() {
+  sttSeq += 1;
+  sttAbort?.abort();
+  sttAbort = null;
+}
+
+async function transcribe(blob) {
+  cancelTranscription();
+  const seq = sttSeq;
+  sttAbort = new AbortController();
+  setState('thinking');
+  caption.textContent = 'Understanding…';
+  const body = new FormData();
+  body.append('audio', blob, 'clip.webm');
+  try {
+    const res = await fetch('/api/stt', { method: 'POST', body, signal: sttAbort.signal });
+    const data = await res.json();
+    if (seq !== sttSeq) return;            // a newer turn has started
+    sttAbort = null;
+    if (data.text) ask(data.text);
+    else { setState('idle'); setStatus("Didn't catch that — tap the mic and try again"); }
+  } catch (err) {
+    if (seq !== sttSeq) return;
+    setState('idle');
+    setStatus('Transcription failed — please try again');
+  }
+}
+
 async function startRecording() {
   const stream = await navigator.mediaDevices.getUserMedia({
-    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
   });
-  recorder = new MediaRecorder(stream);
+  // The visitor may have tapped stop while the permission prompt was open.
+  if (!listening) { stream.getTracks().forEach((t) => t.stop()); return; }
+
+  const rec = new MediaRecorder(stream);
+  recorder = rec;
   clips = [];
   heardVoice = false;
-  recorder.ondataavailable = (e) => clips.push(e.data);
-  recorder.onstop = async () => {
+  rec.ondataavailable = (e) => { if (e.data.size) clips.push(e.data); };
+  rec.onstop = () => {
     stream.getTracks().forEach((t) => t.stop());
-    if (!heardVoice) {
+    if (rec !== recorder) return;          // superseded by a newer recording
+    if (!heardVoice || !clips.length) {
       setState('idle');
       setStatus("Didn't catch that — tap the mic and try again");
       return;
     }
-    setState('thinking');
-    caption.textContent = 'Listening back…';
-    const body = new FormData();
-    body.append('audio', new Blob(clips, { type: recorder.mimeType || 'audio/webm' }), 'clip.webm');
-    try {
-      const data = await (await fetch('/api/stt', { method: 'POST', body })).json();
-      if (data.text) ask(data.text);
-      else { setState('idle'); setStatus("Didn't catch that — tap the mic and try again"); }
-    } catch (err) {
-      setState('idle');
-      setStatus('Transcription failed');
-    }
+    transcribe(new Blob(clips, { type: rec.mimeType || 'audio/webm' }));
   };
-  recorder.start(250);
+  rec.start(250);
 
-  // Watch the input level: the noise floor is learned in the first moments,
-  // and speech is anything clearly above it.
+  // Voice activity from the input level. The noise floor is learned in the
+  // first moments and then follows the room slowly, so a fan or traffic does
+  // not count as speech and a quiet voice still does.
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   const analyser = audioCtx.createAnalyser();
   analyser.fftSize = 1024;
   audioCtx.createMediaStreamSource(stream).connect(analyser);
   const buf = new Float32Array(analyser.fftSize);
   const t0 = Date.now();
-  let floor = 0.01;
+  let floor = 0;
+  let level = 0;
+  let voicedMs = 0;
   let lastVoice = 0;
   levelTimer = setInterval(() => {
     analyser.getFloatTimeDomainData(buf);
     let sum = 0;
     for (let i = 0; i < buf.length; i += 1) sum += buf[i] * buf[i];
     const rms = Math.sqrt(sum / buf.length);
+    level = level * 0.6 + rms * 0.4;
     const now = Date.now();
-    if (now - t0 < 400) { floor = Math.max(floor, rms); return; }
-    if (rms > floor + SPEECH_LEVEL) {
-      heardVoice = true;
+    // live meter on the mic button, so the visitor can see they are heard
+    mic.style.setProperty('--level', Math.min(1, level * 12).toFixed(3));
+    if (now - t0 < 350) { floor = Math.max(floor, level); return; }
+    const voiced = level > Math.max(floor * 2.4, floor + 0.01, 0.012);
+    if (voiced) {
+      voicedMs += 100;
       lastVoice = now;
-      caption.textContent = 'Listening… tap the mic when you are done';
+      if (voicedMs >= MIN_SPEECH_MS && !heardVoice) {
+        heardVoice = true;
+        caption.textContent = 'Listening… tap the mic when you are done';
+      }
+    } else {
+      // follow the room: drift down quickly, up slowly
+      floor = level < floor ? floor * 0.9 + level * 0.1 : floor * 0.995 + level * 0.005;
     }
     if (heardVoice && now - lastVoice > SILENCE_AFTER_SPEECH_MS) finishRecording();
     else if (!heardVoice && now - t0 > WAIT_FOR_SPEECH_MS) finishRecording();
@@ -490,7 +600,7 @@ function chooseSttPath() {
 async function startListening() {
   if (useLocalStt) {
     await startRecording();
-    capTimer = setTimeout(finishRecording, MAX_LISTEN_MS);
+    if (listening) capTimer = setTimeout(finishRecording, MAX_LISTEN_MS);
   } else {
     recognizer.start();
     armSilence(WAIT_FOR_SPEECH_MS);
@@ -499,15 +609,20 @@ async function startListening() {
 }
 
 mic.addEventListener('click', async () => {
+  if (micStarting) return;
   // Tapping again means "I'm done" — send what was heard straight away.
   if (listening) {
-    if (useLocalStt) { heardVoice = true; finishRecording(); } else finishListening();
+    if (useLocalStt) { if (Date.now() - listenStartedAt > 600) heardVoice = true; finishRecording(); }
+    else finishListening();
     return;
   }
+  micStarting = true;
   try {
     cancelClosing();
-    window.speechSynthesis?.cancel();
+    cancelSpeech();
+    cancelTranscription();
     listening = true;
+    listenStartedAt = Date.now();
     committed = '';
     pending = '';
     mic.classList.add('on');
@@ -528,6 +643,8 @@ mic.addEventListener('click', async () => {
         ? 'Microphone access is blocked — allow it in the browser settings'
         : 'Microphone unavailable',
     );
+  } finally {
+    micStarting = false;
   }
 });
 
@@ -586,6 +703,7 @@ function renderProducts(list) {
       const card = document.createElement('button');
       card.type = 'button';
       card.className = 'product';
+      card.style.setProperty('--i', list.indexOf(product));
       card.dataset.ask = product.ask;
       // The robot's own render; falls back to its initial if the image is missing.
       const badge = document.createElement('span');
@@ -666,6 +784,8 @@ const forced = location.hash.match(/state=(\w+)/);
 renderChips(STARTERS);
 speechEl.classList.add('greeting-mode');
 setState(forced ? forced[1] : 'idle');
+[...topics.children].forEach((chip, i) => chip.style.setProperty('--i', i + 6));
+document.body.classList.add('ready');
 answerEl.classList.add('in');
 
 if (!forced) {

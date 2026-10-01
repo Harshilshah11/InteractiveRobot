@@ -415,158 +415,215 @@ main {
 .centre.long .robot { height: min(200px, 22vh); }
 
 /* ---------- the robot ---------- */
-/* The character's colours are fixed rather than themed, so it looks like
-   itself on a light page and a dark one. Only the glow changes with state. */
-.shadow { fill: #000; opacity: .22; }
-.shell { fill: url(#shell); }
-.body  { fill: url(#torso); }
-.arm, .foot { fill: url(#limb); }
-.pod   { fill: url(#pod); }
-.visor { fill: var(--visor); }
-.crest, .belt { fill: var(--crest); }
-.chest { fill: rgba(255, 255, 255, .12); }
-.stem  { stroke: #b8c4d8; stroke-width: 4; stroke-linecap: round; }
+/* A humanoid bust: pearl shell, dark glass visor, LED eyes. The shell keeps
+   fixed colours so it looks the same in both themes; only the light — eyes,
+   voice line, sensors, chest core, orbit and platform — follows the state,
+   through one variable, so the pose can never disagree with the logic.
+   Motion is slow and eased: a product demo, not a cartoon. */
+.robot { --dur: 1; }
 
-/* everything that reads the state */
-.eye, .bulb, .core { fill: var(--glow); }
-.mouth rect { fill: var(--glow); opacity: .92; }
-.brows line { stroke: var(--glow); stroke-width: 4; stroke-linecap: round; opacity: 0; }
-.rings circle { fill: none; stroke: var(--glow); stroke-width: 2; opacity: 0; }
+.shell, .bust { fill: url(#shell); }
+.shell-shade, .bust-shade { fill: url(#shellSide); pointer-events: none; }
+.shell-rim { fill: none; stroke: rgba(255, 255, 255, .85); stroke-width: 1.2; }
+.shell, .bust { filter: drop-shadow(0 10px 18px rgba(18, 22, 48, .28)); }
+.neck { fill: url(#graphite); }
+.module { fill: url(#graphite); }
+.visor { fill: url(#visor); stroke: rgba(255, 255, 255, .06); stroke-width: 1; }
+.seam { fill: none; stroke: rgba(30, 40, 70, .14); stroke-width: 1.4; stroke-linecap: round; }
+.sheen { fill: url(#sheen); }
+#pad stop { stop-color: var(--glow); }
 
-.eye, .bulb, .core, .mouth rect { filter: drop-shadow(0 0 7px var(--glow)); }
-.shell, .body { filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .35)); }
+/* everything that carries the state colour */
+.eye, .sensor, .core, .module-light, .mouth rect { fill: var(--glow); }
+.eye, .core, .module-light, .mouth rect, .sensor { filter: drop-shadow(0 0 6px var(--glow)); }
+.brows line { stroke: var(--glow); stroke-width: 3.2; stroke-linecap: round; opacity: 0; }
+.rings circle { fill: none; stroke: var(--glow); stroke-width: 1.6; opacity: 0; }
+.orbit-track { fill: none; stroke: var(--glow); stroke-opacity: .22; stroke-width: 1; stroke-dasharray: 1.5 6; }
+.orbit.front .orbit-track { stroke-opacity: .35; }
+.orbit-comet {
+  fill: none;
+  stroke: var(--glow);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: 9 91;
+  filter: drop-shadow(0 0 4px var(--glow));
+  animation: orbit calc(9s * var(--dur)) linear infinite;
+}
+@keyframes orbit { to { stroke-dashoffset: -100; } }
+.spinner {
+  fill: none;
+  stroke: var(--glow);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 18 82;
+  opacity: 0;
+  transform-origin: 130px 100px;
+  transition: opacity .3s ease;
+}
+.scan { fill: var(--glow); opacity: 0; filter: drop-shadow(0 0 6px var(--glow)); }
+.pad { fill: url(#pad); }
+.pad-rim { fill: none; stroke: var(--glow); stroke-opacity: .35; stroke-width: 1; }
+.ripple { fill: none; stroke: var(--glow); stroke-width: 1; opacity: 0; transform-origin: 130px 270px; }
+.motes circle { fill: var(--glow); opacity: 0; }
 
 /* ---------- idle ---------- */
-.bob { animation: bob 3.4s ease-in-out infinite; }
-@keyframes bob {
+/* hovering, breathing, looking around — alive but composed */
+.bob { animation: hover 5s ease-in-out infinite; }
+@keyframes hover {
   0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-5px); }
+  50%      { transform: translateY(-7px); }
 }
-.head { animation: tilt 7s ease-in-out infinite; transform-origin: 120px 140px; }
-@keyframes tilt {
+/* the platform's light tightens as the unit rises */
+.pad { animation: padbreath 5s ease-in-out infinite; transform-origin: 130px 270px; }
+@keyframes padbreath {
+  0%, 100% { opacity: .9; transform: scale(1); }
+  50%      { opacity: .6; transform: scale(.9); }
+}
+.ripple { animation: ripple 4.4s ease-out infinite; }
+.ripple:nth-of-type(3) { animation-delay: 2.2s; }
+@keyframes ripple {
+  0%   { transform: scale(.9); opacity: .5; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+.head { animation: look 11s ease-in-out infinite; transform-origin: 130px 150px; }
+@keyframes look {
   0%, 100% { transform: rotate(0); }
-  35%      { transform: rotate(2deg); }
-  70%      { transform: rotate(-2deg); }
+  30%      { transform: rotate(1.6deg); }
+  65%      { transform: rotate(-1.6deg); }
 }
-/* blinks, and glances side to side between blinks */
-.eyes { animation: blink 6.2s ease-in-out infinite; transform-origin: 120px 94px; }
+/* blink, then a glance to one side and back */
+.eyes { animation: blink 7s ease-in-out infinite; transform-origin: 130px 95px; }
 @keyframes blink {
-  0%, 40%       { transform: translateX(0) scaleY(1); }
-  46%           { transform: translateX(0) scaleY(.1); }
-  52%, 74%      { transform: translateX(4px) scaleY(1); }
-  92%, 100%     { transform: translateX(0) scaleY(1); }
+  0%, 44%   { transform: translateX(0) scaleY(1); }
+  46%       { transform: translateX(0) scaleY(.08); }
+  48%, 60%  { transform: translateX(0) scaleY(1); }
+  64%, 78%  { transform: translateX(5px) scaleY(1); }
+  82%, 100% { transform: translateX(0) scaleY(1); }
 }
-.core { animation: pulse 3.2s ease-in-out infinite; }
-@keyframes pulse {
-  0%, 100% { opacity: .6; }
+.mouth rect { opacity: .45; transform-box: fill-box; transform-origin: center; }
+.core { animation: breathe 4s ease-in-out infinite; }
+.module-light { animation: breathe 4s ease-in-out infinite; animation-delay: -1s; }
+.sensor { animation: breathe 2.8s ease-in-out infinite; }
+@keyframes breathe {
+  0%, 100% { opacity: .55; }
   50%      { opacity: 1; }
 }
-.bulb { animation: pulse 2.6s ease-in-out infinite; }
-.arm { animation: sway 4.2s ease-in-out infinite; transform-origin: 120px 165px; }
-.arm.r { animation-delay: -2.1s; }
-@keyframes sway {
-  0%, 100% { transform: rotate(0); }
-  50%      { transform: rotate(2deg); }
+/* a light sweep across the glass every few seconds */
+.sheen { animation: sheen 8s ease-in-out infinite; }
+@keyframes sheen {
+  0%, 70% { transform: skewX(-20deg) translateX(0); }
+  100%    { transform: skewX(-20deg) translateX(190px); }
 }
-.pod { animation: pulse 5s ease-in-out infinite; }
-.mouth rect { opacity: .35; }
+.motes circle { animation: rise 9s linear infinite; }
+.motes circle:nth-child(2) { animation-delay: -1.5s; animation-duration: 11s; }
+.motes circle:nth-child(3) { animation-delay: -3s; }
+.motes circle:nth-child(4) { animation-delay: -4.5s; animation-duration: 10s; }
+.motes circle:nth-child(5) { animation-delay: -6s; animation-duration: 12s; }
+.motes circle:nth-child(6) { animation-delay: -7.5s; }
+@keyframes rise {
+  0%   { transform: translateY(0); opacity: 0; }
+  15%  { opacity: .55; }
+  100% { transform: translateY(-190px); opacity: 0; }
+}
 
 /* ---------- listening ---------- */
 [data-state="listening"] { --glow: var(--live); }
-.rings circle { transform-origin: 120px 96px; }
-[data-state="listening"] .rings circle { animation: sonar 1.9s ease-out infinite; }
-[data-state="listening"] .rings circle:nth-child(2) { animation-delay: .63s; }
-[data-state="listening"] .rings circle:nth-child(3) { animation-delay: 1.26s; }
+[data-state="listening"] .robot { --dur: .45; }
+.rings circle { transform-origin: 130px 99px; }
+[data-state="listening"] .rings circle { animation: sonar 2s ease-out infinite; }
+[data-state="listening"] .rings circle:nth-child(2) { animation-delay: .66s; }
+[data-state="listening"] .rings circle:nth-child(3) { animation-delay: 1.33s; }
 @keyframes sonar {
-  0%   { transform: scale(.55); opacity: .55; }
-  100% { transform: scale(1.25); opacity: 0; }
+  0%   { transform: scale(.6); opacity: .5; }
+  100% { transform: scale(1.3); opacity: 0; }
 }
-[data-state="listening"] .bulb { animation: pulse .7s ease-in-out infinite; }
-[data-state="listening"] .eyes { animation: none; transform: scaleY(1.15); }
-[data-state="listening"] .bob { animation-duration: 1.8s; }
-[data-state="listening"] .arm { animation-duration: 1.8s; }
+[data-state="listening"] .eyes { animation: none; transform: scaleY(1.12); }
+[data-state="listening"] .module-light { animation: breathe .8s ease-in-out infinite; }
+[data-state="listening"] .sensor { animation: breathe .6s ease-in-out infinite; }
 /* leans in slightly, the way you do when you're actually listening */
-[data-state="listening"] .head { animation: none; transform: rotate(0) translateY(2px); }
+[data-state="listening"] .head { animation: none; transform: rotate(0) translateY(2px); transition: transform .4s ease; }
+[data-state="listening"] .mouth rect { opacity: .3; }
 
 /* ---------- thinking ---------- */
 [data-state="thinking"] { --glow: var(--think); }
-/* eyes narrow to scanning slits and sweep side to side */
-[data-state="thinking"] .eyes {
-  animation: scan 1s ease-in-out infinite;
-  transform: scaleY(.32);
+[data-state="thinking"] .robot { --dur: .35; }
+/* eyes narrow to scanning slits and sweep */
+[data-state="thinking"] .eyes { animation: scaneyes 1.1s ease-in-out infinite; transform: scaleY(.3); }
+@keyframes scaneyes {
+  0%, 100% { transform: scaleY(.3) translateX(-6px); }
+  50%      { transform: scaleY(.3) translateX(6px); }
 }
-@keyframes scan {
-  0%, 100% { transform: scaleY(.32) translateX(-5px); }
-  50%      { transform: scaleY(.32) translateX(5px); }
+/* a scan line passes down the visor */
+[data-state="thinking"] .scan { animation: scanline 1.4s ease-in-out infinite; }
+@keyframes scanline {
+  0%   { transform: translateY(0); opacity: 0; }
+  15%  { opacity: .8; }
+  85%  { opacity: .8; }
+  100% { transform: translateY(66px); opacity: 0; }
 }
-[data-state="thinking"] .mouth rect { animation: none; height: 3px; y: 117px; opacity: .5; }
-[data-state="thinking"] .bulb { animation: spinpulse .6s linear infinite; }
-@keyframes spinpulse { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
-/* a bigger, slower tilt reads as pondering */
-[data-state="thinking"] .head { animation: tilt 1.6s ease-in-out infinite; }
-[data-state="thinking"] .arm { animation-duration: 2.4s; }
+[data-state="thinking"] .spinner { opacity: .9; animation: spin 1.2s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+[data-state="thinking"] .mouth rect { opacity: .25; }
+[data-state="thinking"] .head { animation: look 3.2s ease-in-out infinite; }
 
 /* ---------- speaking ---------- */
 [data-state="speaking"] { --glow: var(--ok); }
+[data-state="speaking"] .robot { --dur: .7; }
 [data-state="speaking"] .mouth rect {
-  animation: talk .42s ease-in-out infinite alternate;
-  transform-origin: center 118px;
   opacity: .95;
+  animation: eq .5s ease-in-out infinite alternate;
 }
-[data-state="speaking"] .mouth rect:nth-child(1) { animation-delay: -.34s; }
-[data-state="speaking"] .mouth rect:nth-child(2) { animation-delay: -.17s; }
-[data-state="speaking"] .mouth rect:nth-child(4) { animation-delay: -.21s; }
-[data-state="speaking"] .mouth rect:nth-child(5) { animation-delay: -.38s; }
-@keyframes talk {
-  from { transform: scaleY(.35); }
-  to   { transform: scaleY(2.6); }
+[data-state="speaking"] .mouth rect:nth-child(1) { animation-delay: -.42s; }
+[data-state="speaking"] .mouth rect:nth-child(2) { animation-delay: -.12s; }
+[data-state="speaking"] .mouth rect:nth-child(3) { animation-delay: -.33s; }
+[data-state="speaking"] .mouth rect:nth-child(4) { animation-delay: -.05s; }
+[data-state="speaking"] .mouth rect:nth-child(5) { animation-delay: -.27s; }
+[data-state="speaking"] .mouth rect:nth-child(6) { animation-delay: -.18s; }
+[data-state="speaking"] .mouth rect:nth-child(7) { animation-delay: -.38s; }
+@keyframes eq {
+  from { transform: scaleY(.6); }
+  to   { transform: scaleY(3.2); }
 }
-[data-state="speaking"] .bob { animation-duration: 1.4s; }
-[data-state="speaking"] .arm { animation-duration: 1.4s; }
-[data-state="speaking"] .head { animation: tilt 2.2s ease-in-out infinite; }
+[data-state="speaking"] .core { animation: breathe .9s ease-in-out infinite; }
+[data-state="speaking"] .head { animation: look 4.5s ease-in-out infinite; }
 
 /* ---------- not sure ---------- */
 /* Amber like thinking, because that is what this is: still thinking, out
-   loud. The head cocks and stays cocked — a held pose reads as a question,
-   where the refusing shake reads as a full stop. */
+   loud. The head tilts and holds — a held pose reads as a question, where
+   the refusing shake reads as a full stop. */
 [data-state="clarifying"] { --glow: var(--think); }
 [data-state="clarifying"] .eyes { animation: none; }
-/* one eye squints under one raised brow: both is alarm, one is a query */
-[data-state="clarifying"] .eye:first-child {
-  transform: scaleY(.55);
-  transform-origin: 97px 94px;
-}
+/* one eye narrows under one raised brow: both is alarm, one is a query */
+[data-state="clarifying"] .eye:first-child { transform: scaleY(.5); transform-origin: 109px 95px; }
 [data-state="clarifying"] .brows line:first-child { opacity: .85; }
-[data-state="clarifying"] .mouth rect { animation: none; height: 4px; y: 116px; opacity: .7; }
-[data-state="clarifying"] .head {
-  animation: cock .55s ease-out forwards;
-  transform-origin: 120px 140px;
-}
+[data-state="clarifying"] .mouth rect { opacity: .6; }
+[data-state="clarifying"] .head { animation: cock .6s cubic-bezier(.2, .8, .3, 1) forwards; }
 @keyframes cock {
   from { transform: rotate(0); }
-  to   { transform: rotate(-7deg); }
+  to   { transform: rotate(-6deg); }
 }
-[data-state="clarifying"] .bulb { animation: pulse 1.5s ease-in-out infinite; }
 
 /* ---------- no answer ---------- */
-[data-state="refusing"] { --glow: #97a2b8; }
-[data-state="refusing"] .eyes { animation: none; transform: scaleY(.55); }
-[data-state="refusing"] .brows line { opacity: .9; }
-[data-state="refusing"] .mouth rect { height: 3px; y: 118px; }
-[data-state="refusing"] .head { animation: shake .5s ease-in-out; transform-origin: 120px 140px; }
+[data-state="refusing"] { --glow: #9aa3b5; }
+[data-state="refusing"] .robot { --dur: 1.6; }
+[data-state="refusing"] .eyes { animation: none; transform: scaleY(.5) translateY(3px); }
+[data-state="refusing"] .brows line { opacity: .85; }
+[data-state="refusing"] .mouth rect { opacity: .35; }
+[data-state="refusing"] .head { animation: shake .8s ease-in-out; }
 @keyframes shake {
   0%, 100% { transform: rotate(0); }
-  25%      { transform: rotate(-5deg); }
-  75%      { transform: rotate(5deg); }
+  25%      { transform: rotate(-4deg); }
+  60%      { transform: rotate(3deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bob, .eyes, .core, .bulb, .mouth rect, .rings circle,
-  .head, .arm, .pod, .chip, .answer, .heard {
+  .bob, .eyes, .core, .sensor, .module-light, .mouth rect, .rings circle,
+  .head, .pad, .ripple, .sheen, .motes circle, .orbit-comet, .spinner, .scan,
+  .chip, .answer, .heard {
     animation: none !important;
   }
-  /* the cocked head is a pose, not a motion — keep it */
-  [data-state="clarifying"] .head { transform: rotate(-7deg); }
+  /* the tilted head is a pose, not a motion — keep it */
+  [data-state="clarifying"] .head { transform: rotate(-6deg); }
 }
 
 /* ---------- text ---------- */
@@ -917,4 +974,219 @@ main {
   .mic { width: 50px; height: 50px; }
   .field { height: 50px; }
   .send { width: 38px; height: 38px; }
+}
+
+/* ======================================================================
+   Motion
+   One easing family, short distances, and nothing that loops unless it
+   carries state. Entrances are choreographed once on load; after that,
+   motion only answers something the visitor or the robot did.
+   ====================================================================== */
+:root {
+  --ease-out: cubic-bezier(.16, 1, .3, 1);      /* expo-out: fast start, soft landing */
+  --ease-io: cubic-bezier(.65, 0, .35, 1);
+}
+
+/* --- theme changes cross-fade instead of snapping --- */
+body, .nav, .list, .chip, .speech, .product, .field, .segmented, .health, .p-media {
+  transition-property: background-color, color, border-color, box-shadow, opacity, transform;
+  transition-duration: .35s;
+  transition-timing-function: var(--ease-io);
+}
+
+/* --- living background: the brand light drifts slowly --- */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -20%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(40% 35% at 70% 30%, var(--aura-1), transparent 70%),
+    radial-gradient(35% 30% at 25% 75%, var(--aura-2), transparent 70%);
+  animation: drift 28s ease-in-out infinite alternate;
+}
+@keyframes drift {
+  0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50%  { transform: translate3d(-4%, 3%, 0) rotate(6deg); }
+  100% { transform: translate3d(3%, -2%, 0) rotate(-4deg); }
+}
+
+/* --- page entrance --- */
+@keyframes fade-up   { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes fade-down { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+@keyframes fade-left { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+@keyframes pop-in    { from { opacity: 0; transform: translateY(18px) scale(.94); } to { opacity: 1; transform: none; } }
+
+.ready .nav           { animation: fade-down .7s var(--ease-out) backwards; }
+.ready .group-label   { animation: fade-left .6s var(--ease-out) backwards; animation-delay: .15s; }
+.ready .stage         { animation: pop-in .9s var(--ease-out) backwards; animation-delay: .1s; }
+.ready .speech        { animation: fade-up .8s var(--ease-out) backwards; animation-delay: .3s; }
+.ready .composer      { animation: fade-up .8s var(--ease-out) backwards; animation-delay: .5s; }
+.ready .contact-card  { animation: fade-up .8s var(--ease-out) backwards; animation-delay: .6s; }
+
+/* lists and cards cascade in, and again whenever the suggestions change */
+.chip    { animation: fade-left .5s var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * 45ms + .2s); }
+.product { animation: fade-up .6s var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * 70ms + .4s); }
+#chips .chip { animation-delay: calc(var(--i, 0) * 45ms); }
+
+/* --- suggestion rows: the chevron leads the way on hover --- */
+.chip::after { transition: transform .25s var(--ease-out), border-color .2s; }
+.chip:hover::after { transform: translate(3px, -50%) rotate(45deg); border-color: var(--accent); }
+
+/* --- product cards lift; the robot inside rises to meet the pointer --- */
+.product { will-change: transform; }
+.product:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(28, 20, 90, .14), 0 0 0 1px var(--accent-soft); }
+.product:active { transform: translateY(-1px) scale(.98); }
+.p-media img { transition: transform .5s var(--ease-out), filter .3s; }
+.product:hover .p-media img { transform: scale(1.12) translateY(-2px) rotate(-2deg); }
+
+/* --- answer card: an animated light edge in the robot's colour --- */
+.speech { position: relative; isolation: isolate; }
+.speech::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--edge, 0deg), transparent 0 55%, var(--glow) 75%, transparent 95%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  opacity: 0;
+  transition: opacity .5s var(--ease-io);
+}
+@property --edge { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+body[data-state="thinking"] .speech::before,
+body[data-state="speaking"] .speech::before,
+body[data-state="listening"] .speech::before { opacity: 1; animation: edge 3s linear infinite; }
+body[data-state="thinking"] .speech::before { animation-duration: 1.4s; }
+@keyframes edge { to { --edge: 360deg; } }
+/* the card takes the state glow so the edge matches the robot */
+body[data-state="listening"]  { --glow: var(--live); }
+body[data-state="thinking"]   { --glow: var(--think); }
+body[data-state="speaking"]   { --glow: var(--ok); }
+body[data-state="clarifying"] { --glow: var(--think); }
+body[data-state="refusing"]   { --glow: #9aa3b5; }
+
+/* thinking: three soft dots where the answer will appear */
+body[data-state="thinking"] .answer:empty {
+  display: flex;
+  gap: 7px;
+  justify-content: center;
+  height: 28px;
+  align-items: center;
+}
+body[data-state="thinking"] .answer:empty::before,
+body[data-state="thinking"] .answer:empty::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--glow);
+  animation: dot 1s var(--ease-io) infinite;
+}
+body[data-state="thinking"] .answer:empty::after { animation-delay: .25s; }
+@keyframes dot {
+  0%, 100% { opacity: .25; transform: translateY(0); }
+  50%      { opacity: 1; transform: translateY(-5px); }
+}
+
+/* words settle in one after another */
+.answer .w {
+  display: inline-block;
+  animation: word .5s var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes word {
+  from { opacity: 0; transform: translateY(6px); filter: blur(3px); }
+  to   { opacity: 1; transform: none; filter: none; }
+}
+.heard.in { animation: bubble .45s var(--ease-out) both; transform-origin: right bottom; }
+@keyframes bubble {
+  from { opacity: 0; transform: scale(.85) translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* --- mic: an inviting breath at rest, a live level ring while listening --- */
+.mic::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 2px solid var(--brand-2);
+  opacity: 0;
+  animation: invite 3.2s var(--ease-io) infinite;
+}
+@keyframes invite {
+  0%, 60%, 100% { transform: scale(.92); opacity: 0; }
+  75%           { transform: scale(1.08); opacity: .5; }
+}
+.mic.on::before {
+  animation: none;
+  opacity: .9;
+  border-color: var(--red);
+  transform: scale(calc(1 + var(--level, 0) * .45));
+  transition: transform .1s linear;
+}
+body[data-state="thinking"] .mic::before,
+body[data-state="speaking"] .mic::before { animation: none; }
+.mic:hover:not(:active) { transform: scale(1.05); }
+
+/* --- send arrow <-> stop square --- */
+.send { position: relative; overflow: hidden; }
+.send svg { position: absolute; inset: 0; margin: auto; transition: transform .35s var(--ease-out), opacity .25s; }
+.send .ic-stop { fill: currentColor; stroke: none; opacity: 0; transform: scale(.4) rotate(-90deg); }
+.is-speaking .send { opacity: 1 !important; background: var(--red); animation: stop-pulse 1.6s var(--ease-io) infinite; }
+.is-speaking .send .ic-send { opacity: 0; transform: translateY(-14px); }
+.is-speaking .send .ic-stop { opacity: 1; transform: none; }
+@keyframes stop-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, .45); }
+  50%      { box-shadow: 0 0 0 7px rgba(255, 59, 48, 0); }
+}
+.send:hover:not(:active) { transform: scale(1.06); }
+
+/* --- status dot breathes while online --- */
+.health[data-ok="true"] .dot { animation: online 2.4s var(--ease-io) infinite; }
+@keyframes online {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, .45); }
+  50%      { box-shadow: 0 0 0 5px rgba(52, 199, 89, 0); }
+}
+
+/* --- contact card: a slow sheen across the brand gradient --- */
+.contact-card { position: relative; overflow: hidden; }
+.contact-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, .16) 50%, transparent 65%);
+  transform: translateX(-100%);
+  animation: card-sheen 7s var(--ease-io) infinite;
+  pointer-events: none;
+}
+@keyframes card-sheen {
+  0%, 70% { transform: translateX(-100%); }
+  100%    { transform: translateX(100%); }
+}
+.contact-row { transition: background .2s, transform .25s var(--ease-out); }
+.contact-row:hover { transform: translateX(3px); }
+
+/* --- halo breathes with the robot and takes its colour --- */
+.halo { animation: halo 5s ease-in-out infinite; transition: background .6s; }
+@keyframes halo {
+  0%, 100% { opacity: .85; transform: translateX(-50%) scale(1); }
+  50%      { opacity: 1; transform: translateX(-50%) scale(1.06); }
+}
+
+/* --- segmented control: the selected pill slides --- */
+.segmented button { transition: background .3s var(--ease-out), color .2s, box-shadow .3s; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+  body::before { animation: none; }
 }

@@ -203,6 +203,25 @@ SHOULD_REFUSE = [
 ]
 
 
+# Facts only the synced copy of arnobot.in has (data/web/, app/sitesync.py).
+# They must be answered, and from the website rather than company.md.
+SHOULD_ANSWER_FROM_SITE = [
+    ("who is Prijen Balar", "Duct Cleaning"),
+    ("who is Harshil Shah", "Software & Website"),
+    ("who is Noman Menon", "Hardware & Documentation"),
+    ("what is iCreate ProtoQuik", "ProtoQuik"),
+]
+
+# The website copy is a fallback. With it loaded, these must still be
+# answered from company.md, word for word as before.
+CURATED_STAYS_CURATED = [
+    ("who is the CEO", "Anmol Shah is the Founder and CEO"),
+    ("how much can Saibya carry", "payload capacity of up to 200 kilograms"),
+    ("are you hiring", "Yes, Arnobot is hiring"),
+    ("which robot can climb walls", "Altius"),
+]
+
+
 CHECKS = 0
 
 
@@ -320,6 +339,39 @@ def main() -> int:
             f"mode={result['mode']}, leaked: {result['answer'][:110]}",
             failures,
         )
+
+    print("\n-- company.md stays authoritative " + "-" * 35)
+    for question, expected in CURATED_STAYS_CURATED:
+        result = ask(question)
+        ok = (
+            result["answered"]
+            and "origin" not in result
+            and expected.lower() in result["answer"].lower()
+        )
+        _check(
+            question,
+            ok,
+            f"origin={result.get('origin')}: {result['answer'][:110]}",
+            failures,
+        )
+
+    print("\n-- website-only facts come from arnobot.in " + "-" * 26)
+    if retriever.site is None:
+        print("skip  no data/web/ copy yet — run `python -m app.sitesync`")
+    else:
+        for question, expected in SHOULD_ANSWER_FROM_SITE:
+            result = ask(question)
+            ok = (
+                result["answered"]
+                and result.get("origin") == "arnobot.in"
+                and expected.lower() in result["answer"].lower()
+            )
+            _check(
+                f"{result['confidence']:.2f}  {question}",
+                ok,
+                f"origin={result.get('origin')}, want {expected!r}: {result['answer'][:110]}",
+                failures,
+            )
 
     print(f"\n{CHECKS - len(failures)}/{CHECKS} passed")
     return 1 if failures else 0

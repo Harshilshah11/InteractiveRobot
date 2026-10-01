@@ -129,84 +129,130 @@
            idle | listening | thinking | speaking | clarifying | refusing -->
       <div class="stage" id="stage" data-state="idle">
         <div class="halo" aria-hidden="true"></div>
-        <svg class="robot" viewBox="0 0 240 280" aria-hidden="true">
+        <svg class="robot" viewBox="0 0 260 290" aria-hidden="true">
           <defs>
+            <!-- pearl shell: white to cool silver, lit from above -->
             <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%"   stop-color="#ffffff"/>
-              <stop offset="55%"  stop-color="#eef3fb"/>
-              <stop offset="100%" stop-color="#c2d0e6"/>
+              <stop offset="45%"  stop-color="#eef2f8"/>
+              <stop offset="100%" stop-color="#b8c2d3"/>
             </linearGradient>
-            <linearGradient id="torso" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stop-color="#8b6cf5"/>
-              <stop offset="100%" stop-color="#5b62e8"/>
+            <linearGradient id="shellSide" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%"   stop-color="#000" stop-opacity=".14"/>
+              <stop offset="22%"  stop-color="#000" stop-opacity="0"/>
+              <stop offset="78%"  stop-color="#000" stop-opacity="0"/>
+              <stop offset="100%" stop-color="#000" stop-opacity=".16"/>
             </linearGradient>
-            <linearGradient id="limb" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%"   stop-color="#ff9f6b"/>
-              <stop offset="100%" stop-color="#ff6b6b"/>
+            <linearGradient id="visor" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stop-color="#1a2140"/>
+              <stop offset="100%" stop-color="#060912"/>
             </linearGradient>
-            <linearGradient id="pod" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stop-color="#4fe0d0"/>
-              <stop offset="100%" stop-color="#22b3a6"/>
+            <linearGradient id="graphite" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stop-color="#8d97ab"/>
+              <stop offset="100%" stop-color="#4c5468"/>
             </linearGradient>
+            <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%"   stop-color="#fff" stop-opacity="0"/>
+              <stop offset="50%"  stop-color="#fff" stop-opacity=".22"/>
+              <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+            </linearGradient>
+            <radialGradient id="pad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%"   stop-color="var(--glow)" stop-opacity=".55"/>
+              <stop offset="100%" stop-color="var(--glow)" stop-opacity="0"/>
+            </radialGradient>
+            <clipPath id="visorClip">
+              <rect x="74" y="64" width="112" height="70" rx="35"/>
+            </clipPath>
           </defs>
 
-          <!-- expanding rings, visible only while listening -->
-          <g class="rings">
-            <circle cx="120" cy="96" r="78"/>
-            <circle cx="120" cy="96" r="78"/>
-            <circle cx="120" cy="96" r="78"/>
+          <!-- hover platform: soft light pool with rings rippling outwards -->
+          <g class="platform">
+            <ellipse class="pad" cx="130" cy="270" rx="86" ry="13"/>
+            <ellipse class="ripple" cx="130" cy="270" rx="60" ry="9"/>
+            <ellipse class="ripple" cx="130" cy="270" rx="60" ry="9"/>
+            <ellipse class="pad-rim" cx="130" cy="270" rx="58" ry="8.5"/>
           </g>
 
-          <ellipse class="shadow" cx="120" cy="258" rx="56" ry="8"/>
+          <!-- ambient motes drifting up past the unit -->
+          <g class="motes">
+            <circle cx="62"  cy="250" r="1.6"/>
+            <circle cx="198" cy="244" r="1.2"/>
+            <circle cx="84"  cy="262" r="1"/>
+            <circle cx="176" cy="258" r="1.5"/>
+            <circle cx="40"  cy="200" r="1.1"/>
+            <circle cx="222" cy="206" r="1.3"/>
+          </g>
+
+          <!-- sonar rings, visible only while listening -->
+          <g class="rings">
+            <circle cx="130" cy="99" r="80"/>
+            <circle cx="130" cy="99" r="80"/>
+            <circle cx="130" cy="99" r="80"/>
+          </g>
 
           <g class="bob">
-            <!-- antenna -->
-            <line class="stem" x1="120" y1="46" x2="120" y2="26"/>
-            <circle class="bulb" cx="120" cy="18" r="8"/>
+            <!-- orbit behind the head (back half is drawn under the shell) -->
+            <g class="orbit" transform="rotate(-9 130 104)">
+              <ellipse class="orbit-track" cx="130" cy="104" rx="122" ry="30"/>
+              <ellipse class="orbit-comet" cx="130" cy="104" rx="122" ry="30" pathLength="100"/>
+            </g>
 
-            <!-- arms sit behind the torso -->
-            <rect class="arm l" x="41"  y="162" width="18" height="54" rx="9"/>
-            <rect class="arm r" x="181" y="162" width="18" height="54" rx="9"/>
+            <!-- shoulders and chest: one smooth bust, no limbs -->
+            <path class="bust" d="M52 246 C54 206 86 184 130 184 C174 184 206 206 208 246 Q208 254 200 254 H60 Q52 254 52 246 Z"/>
+            <path class="bust-shade" d="M52 246 C54 206 86 184 130 184 C174 184 206 206 208 246 Q208 254 200 254 H60 Q52 254 52 246 Z"/>
+            <path class="seam" d="M88 200 C100 222 160 222 172 200"/>
+            <rect class="core" x="108" y="214" width="44" height="4.5" rx="2.25"/>
+            <rect class="neck" x="114" y="156" width="32" height="32" rx="10"/>
 
-            <!-- feet: drawn before the torso so it overlaps their top edge -->
-            <rect class="foot" x="74"  y="232" width="32" height="16" rx="8"/>
-            <rect class="foot" x="134" y="232" width="32" height="16" rx="8"/>
-
-            <!-- torso -->
-            <rect class="body" x="64" y="150" width="112" height="88" rx="28"/>
-            <rect class="chest" x="87" y="166" width="66" height="48" rx="17"/>
-            <circle class="core" cx="120" cy="190" r="13"/>
-            <rect class="belt" x="74" y="222" width="92" height="7" rx="3.5"/>
-
-            <!-- ear pods behind the head -->
-            <ellipse class="pod l" cx="47"  cy="96" rx="11" ry="19"/>
-            <ellipse class="pod r" cx="193" cy="96" rx="11" ry="19"/>
-
-            <!-- head -->
             <g class="head">
-              <rect class="shell" x="52" y="44" width="136" height="102" rx="30"/>
-              <rect class="crest" x="70" y="51" width="100" height="8" rx="4"/>
-              <rect class="visor" x="66" y="64" width="108" height="66" rx="24"/>
+              <!-- side sensor modules -->
+              <rect class="module" x="44"  y="76" width="14" height="46" rx="7"/>
+              <rect class="module" x="202" y="76" width="14" height="46" rx="7"/>
+              <rect class="module-light" x="48.5"  y="86" width="5" height="26" rx="2.5"/>
+              <rect class="module-light" x="206.5" y="86" width="5" height="26" rx="2.5"/>
+
+              <rect class="shell" x="54" y="36" width="152" height="128" rx="56"/>
+              <rect class="shell-shade" x="54" y="36" width="152" height="128" rx="56"/>
+              <rect class="shell-rim" x="55.5" y="37.5" width="149" height="125" rx="54.5"/>
+              <!-- top sensor -->
+              <circle class="sensor" cx="130" cy="50" r="3"/>
+
+              <rect class="visor" x="74" y="64" width="112" height="70" rx="35"/>
+              <g clip-path="url(#visorClip)">
+                <rect class="scan" x="74" y="64" width="112" height="3"/>
+                <rect class="sheen" x="40" y="60" width="44" height="80" transform="skewX(-20)"/>
+              </g>
 
               <g class="eyes">
-                <rect class="eye" x="90"  y="82" width="15" height="24" rx="7.5"/>
-                <rect class="eye" x="135" y="82" width="15" height="24" rx="7.5"/>
+                <rect class="eye" x="102" y="84" width="14" height="22" rx="7"/>
+                <rect class="eye" x="144" y="84" width="14" height="22" rx="7"/>
               </g>
 
               <!-- inner ends sit higher than outer: reads as apologetic, not cross -->
               <g class="brows">
-                <line x1="86" y1="78" x2="109" y2="72"/>
-                <line x1="154" y1="78" x2="131" y2="72"/>
+                <line x1="98"  y1="79" x2="118" y2="74"/>
+                <line x1="162" y1="79" x2="142" y2="74"/>
               </g>
 
+              <!-- voice line: seven bars that become an equaliser when speaking -->
               <g class="mouth">
-                <rect x="101.5" y="114" width="5" height="8" rx="2.5"/>
-                <rect x="109.5" y="114" width="5" height="8" rx="2.5"/>
-                <rect x="117.5" y="114" width="5" height="8" rx="2.5"/>
-                <rect x="125.5" y="114" width="5" height="8" rx="2.5"/>
-                <rect x="133.5" y="114" width="5" height="8" rx="2.5"/>
+                <rect x="111" y="117" width="3" height="4" rx="1.5"/>
+                <rect x="117" y="117" width="3" height="4" rx="1.5"/>
+                <rect x="123" y="117" width="3" height="4" rx="1.5"/>
+                <rect x="129" y="117" width="3" height="4" rx="1.5"/>
+                <rect x="135" y="117" width="3" height="4" rx="1.5"/>
+                <rect x="141" y="117" width="3" height="4" rx="1.5"/>
+                <rect x="147" y="117" width="3" height="4" rx="1.5"/>
               </g>
             </g>
+
+            <!-- front half of the orbit, drawn over the head -->
+            <g class="orbit front" transform="rotate(-9 130 104)">
+              <path class="orbit-track" d="M8 104 A122 30 0 0 0 252 104"/>
+            </g>
+
+            <!-- thinking spinner around the head -->
+            <circle class="spinner" cx="130" cy="100" r="92" pathLength="100"/>
           </g>
         </svg>
 
@@ -238,9 +284,13 @@
           <circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/>
         </svg>
         <input id="q" placeholder="Ask about Arnobot, our robots or careers" aria-label="Question" enterkeyhint="send">
+        <!-- the send arrow becomes a stop button while the robot is talking -->
         <button type="submit" class="send" aria-label="Send">
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" class="ic-send">
             <path d="M12 19V5M6 11l6-6 6 6"/>
+          </svg>
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" class="ic-stop">
+            <rect x="6" y="6" width="12" height="12" rx="2.5"/>
           </svg>
         </button>
       </div>

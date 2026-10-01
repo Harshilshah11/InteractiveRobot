@@ -6,25 +6,28 @@
     </linearGradient>
     <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#ffffff"/>
-      <stop offset="1" stop-color="#cfd9ec"/>
+      <stop offset="1" stop-color="#c3ccdc"/>
+    </linearGradient>
+    <linearGradient id="visor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a2140"/>
+      <stop offset="1" stop-color="#060912"/>
     </linearGradient>
   </defs>
   <!-- app-icon tile -->
   <rect width="64" height="64" rx="14" fill="url(#bg)"/>
-  <!-- antenna -->
-  <rect x="30.5" y="8" width="3" height="9" rx="1.5" fill="#cfd9ec"/>
-  <circle cx="32" cy="8.5" r="4" fill="#35c8ff"/>
-  <!-- ear pods -->
-  <rect x="6" y="27" width="7" height="14" rx="3.5" fill="#2fd0c0"/>
-  <rect x="51" y="27" width="7" height="14" rx="3.5" fill="#2fd0c0"/>
+  <!-- side sensor modules -->
+  <rect x="6.5" y="24" width="6" height="16" rx="3" fill="#6b7489"/>
+  <rect x="51.5" y="24" width="6" height="16" rx="3" fill="#6b7489"/>
+  <rect x="8.4" y="27.5" width="2.2" height="9" rx="1.1" fill="#5ac8fa"/>
+  <rect x="53.4" y="27.5" width="2.2" height="9" rx="1.1" fill="#5ac8fa"/>
   <!-- head -->
-  <rect x="10" y="16" width="44" height="38" rx="12" fill="url(#shell)"/>
-  <rect x="17" y="19" width="30" height="3" rx="1.5" fill="#ffcf5c"/>
+  <rect x="10" y="12" width="44" height="40" rx="17" fill="url(#shell)"/>
+  <circle cx="32" cy="16.5" r="1.4" fill="#5ac8fa"/>
   <!-- visor -->
-  <rect x="15" y="25" width="34" height="23" rx="8.5" fill="#101728"/>
-  <!-- eyes -->
-  <rect x="22" y="30" width="6" height="10" rx="3" fill="#35c8ff"/>
-  <rect x="36" y="30" width="6" height="10" rx="3" fill="#35c8ff"/>
-  <!-- smile -->
-  <rect x="27" y="43" width="10" height="2.4" rx="1.2" fill="#35c8ff" opacity=".85"/>
+  <rect x="15.5" y="20" width="33" height="22" rx="11" fill="url(#visor)"/>
+  <!-- LED eyes -->
+  <rect x="23" y="25.5" width="5" height="8" rx="2.5" fill="#5ac8fa"/>
+  <rect x="36" y="25.5" width="5" height="8" rx="2.5" fill="#5ac8fa"/>
+  <!-- voice line -->
+  <rect x="27" y="37" width="10" height="1.8" rx=".9" fill="#5ac8fa" opacity=".7"/>
 </svg>

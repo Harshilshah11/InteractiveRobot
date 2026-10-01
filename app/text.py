@@ -78,6 +78,10 @@ def chunk_markdown(text: str, source: str) -> list[dict]:
     buf: list[str] = []
     aliases = ""
 
+    # <!-- comments --> are notes for whoever edits the file, never knowledge
+    # (data/web/arnobot_in.md carries its sources and sync time in one).
+    text = re.sub(r"<!--.*?-->", "", text, flags=re.S)
+
     for raw in text.splitlines():
         line = raw.rstrip()
         m = re.match(r"^(#{1,6})\s+(.*)$", line)

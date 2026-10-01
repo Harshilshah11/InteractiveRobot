@@ -86,12 +86,10 @@ ACK_REPLY = os.getenv(
     "ROBOT_ACK", "What else would you like to know about Arnobot?"
 )
 
-# Spoken once after an answer if the room goes quiet, then not again until the
-# next answer. Long enough that it never talks over someone still reading.
-CLOSING = os.getenv(
-    "ROBOT_CLOSING",
-    "Thank you. Ask me anything else about Arnobot whenever you are ready.",
-)
+# Optionally spoken once after an answer if the room goes quiet. Off by
+# default: repeated after every answer it reads as filler. Set a line to
+# turn it back on.
+CLOSING = os.getenv("ROBOT_CLOSING", "")
 CLOSING_DELAY_MS = int(os.getenv("ROBOT_CLOSING_DELAY_MS", "25000"))
 
 # Opening line when the robot has a near miss rather than a match.
@@ -104,6 +102,16 @@ CLARIFY_PREFIX = os.getenv(
 # budget than a single-fact reply — but it is still spoken aloud, so it cannot
 # run on. Roughly 45 seconds of speech.
 PROFILE_MAX_CHARS = int(os.getenv("ROBOT_PROFILE_MAX_CHARS", "820"))
+
+# Website copy ---------------------------------------------------------------
+# data/web/ holds text synced from arnobot.in (app/sitesync.py). It is a second
+# opinion, never the first: it is only consulted when data/company.md has no
+# confident answer, and it has to clear a stricter bar than company.md does,
+# because nobody curated it for spoken answers.
+SITE_SOURCE_PREFIX = "web/"
+SITE_THRESHOLD = float(os.getenv("ROBOT_SITE_THRESHOLD", "0.50"))
+SITE_MAX_AGE_HOURS = float(os.getenv("ROBOT_SITE_MAX_AGE_HOURS", "24"))
+SITE_SYNC_ENABLED = os.getenv("ROBOT_SITE_SYNC", "on").lower() != "off"
 
 # Embeddings -----------------------------------------------------------------
 # ONNX model, ~130 MB, downloaded once then runs fully offline on CPU.
@@ -136,6 +144,15 @@ WHISPER_ENABLED = _whisper_mode == "on" or (
     _whisper_mode == "auto" and _whisper_installed()
 )
 WHISPER_MODEL = os.getenv("ROBOT_WHISPER_MODEL", "tiny.en")
+# Words the recogniser should expect. Without them tiny.en hears "Saibya" as
+# "Saybaya" and "Altius" as "altiars"; with them every product name in the
+# test clips came through exactly, at no cost in speed.
+WHISPER_PROMPT = os.getenv(
+    "ROBOT_WHISPER_PROMPT",
+    "Arnobot, Saibya, ATM, NEXUS, Altius, Ahmedabad, Gujarat, robot, payload, "
+    "unmanned ground vehicle, autonomy, careers, hiring, internship, demo, "
+    "quotation, specifications.",
+)
 
 HOST = os.getenv("ROBOT_HOST", "127.0.0.1")
 PORT = int(os.getenv("ROBOT_PORT", "8000"))

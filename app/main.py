@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 import threading
+import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, UploadFile
@@ -10,7 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import embedder, ingest, store
+from . import embedder, ingest, sitesync, store
 from .answerer import respond
 from .config import (
     CLARIFY_THRESHOLD,
@@ -20,16 +22,20 @@ from .config import (
     CONTACT_PHONE,
     CONTACT_WEB,
     FALLBACK,
+    SITE_MAX_AGE_HOURS,
+    SITE_SYNC_ENABLED,
     THRESHOLD,
     WEB_DIR,
     WHISPER_ENABLED,
     WHISPER_MODEL,
+    WHISPER_PROMPT,
 )
 from .products import DEFAULT_FOLLOWUPS, PRODUCTS
 from .retriever import Retriever
 
 _retriever: Retriever | None = None
 _lock = threading.Lock()
+log = logging.getLogger("uvicorn.error")
 _whisper: dict = {}
 _whisper_lock = threading.Lock()
 
@@ -47,7 +53,30 @@ async def lifespan(_app: FastAPI):
     # while to load and the page is usable by typing in the meantime.
     if WHISPER_ENABLED:
         threading.Thread(target=_whisper_model, daemon=True).start()
+    # Keep the arnobot.in copy current in the background; the page is usable
+    # meanwhile, and a failed fetch leaves the last good copy in place.
+    if SITE_SYNC_ENABLED:
+        threading.Thread(target=_site_sync_loop, daemon=True).start()
     yield
+
+
+def _sync_site(force: bool = False) -> dict:
+    """Refresh data/web/ from arnobot.in; rebuild the index only if the text changed."""
+    result = sitesync.sync(max_age_hours=SITE_MAX_AGE_HOURS, force=force)
+    if result.get("changed"):
+        result["index"] = reindex()
+    return result
+
+
+def _site_sync_loop():
+    # Checks hourly, but only refetches once the copy is older than
+    # SITE_MAX_AGE_HOURS, so a kiosk left running for days stays current.
+    while True:
+        try:
+            _sync_site()
+        except Exception:
+            log.exception("site sync failed")
+        time.sleep(3600)
 
 
 def _whisper_model():
@@ -129,6 +158,12 @@ def reindex():
     return result
 
 
+@app.post("/api/sync")
+def sync_site(force: bool = True):
+    """Fetch arnobot.in now and reindex if anything changed."""
+    return _sync_site(force=force)
+
+
 @app.get("/api/products")
 def products_list():
     """The product cards in the UI.
@@ -194,8 +229,17 @@ async def stt(audio: UploadFile):
         tmp.write(await audio.read())
         path = tmp.name
 
-    segments, _info = model.transcribe(path, beam_size=1, vad_filter=True)
+    segments, _info = model.transcribe(
+        path,
+        beam_size=1,
+        language="en",
+        vad_filter=True,
+        initial_prompt=WHISPER_PROMPT,
+    )
     text = " ".join(s.text.strip() for s in segments).strip()
+    # What was heard, in the server log: the first thing to check when a
+    # spoken question gets a strange answer.
+    log.info("stt heard: %r", text)
     Path(path).unlink(missing_ok=True)
     return {"text": text}
 

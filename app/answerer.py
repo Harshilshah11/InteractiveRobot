@@ -35,6 +35,7 @@ from .config import (
     OLLAMA_MODEL,
     OLLAMA_URL,
     PROFILE_MAX_CHARS,
+    SITE_THRESHOLD,
     THANKS_REPLY,
     THRESHOLD,
 )
@@ -391,7 +392,67 @@ def respond(question: str, retriever) -> dict:
 
     hits = retriever.search(cleaned)
     _promote_exact_alias(cleaned, hits)
-    return answer(cleaned, hits, retriever)
+    result = answer(cleaned, hits, retriever)
+
+    # company.md had nothing confident to say. Before referring the caller on
+    # (or asking them to rephrase), see whether the website says it.
+    if not result["answered"] and result["mode"] in {"refer", "clarify"}:
+        site = _from_site(cleaned, getattr(retriever, "site", None))
+        if site:
+            return site
+    return result
+
+
+def _from_site(question: str, site) -> dict | None:
+    """Answer from the synced copy of arnobot.in, or None.
+
+    Same rules as the main path — a verbatim sentence or nothing — with a
+    higher bar: the stricter threshold, and a question with at least two
+    content words, since a one-word question ("features") matches every
+    product page equally and is a clarification, not a lookup.
+    """
+    if site is None or not site.chunks:
+        return None
+    content = [t for t in tokenize(question) if t not in WH_WORDS]
+    if len(content) < 2:
+        return None
+
+    hits = site.search(question)
+    _promote_exact_alias(question, hits)
+    if not hits or hits[0]["confidence"] < SITE_THRESHOLD:
+        return None
+
+    best = hits[0]
+    text = _extract(question, best)
+    if not text:
+        return None
+    if OLLAMA_ENABLED:
+        text = _polish_with_ollama(question, text) or text
+
+    named = products.detect_products(question)
+    followups = (
+        products.followups_for_product(named[0], "overview")
+        if len(named) == 1
+        else list(products.DEFAULT_FOLLOWUPS)
+    )
+    return {
+        "answer": text,
+        "answered": True,
+        "mode": "answer",
+        "facet": "site",
+        "origin": "arnobot.in",
+        "confidence": best["confidence"],
+        "followups": products.prune(followups, question),
+        "sources": [
+            {
+                "source": h["source"],
+                "heading": h["heading"],
+                "confidence": h["confidence"],
+                "snippet": h["text"][:220],
+            }
+            for h in hits[:3]
+        ],
+    }
 
 
 def _promote_exact_alias(question: str, hits: list[dict]) -> bool:

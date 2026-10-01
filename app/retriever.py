@@ -11,7 +11,7 @@ import math
 from collections import Counter
 
 from . import embedder
-from .config import OOV_PENALTY, STRONG_WEIGHT, TOP_K
+from .config import OOV_PENALTY, SITE_SOURCE_PREFIX, STRONG_WEIGHT, TOP_K
 from .text import tokenize
 
 BM25_K1 = 1.5
@@ -35,7 +35,19 @@ def stem(word: str) -> str:
 
 
 class Retriever:
-    def __init__(self, chunks: list[dict]):
+    def __init__(self, chunks: list[dict], _site: bool = False):
+        # Text synced from the website gets a retriever of its own instead of
+        # sharing this one. Mixed in, its words would shift every IDF weight
+        # and widen the vocabulary the out-of-scope check relies on, so curated
+        # answers could change — or start being made — because of a web page.
+        # Kept apart, company.md scores exactly as before, and the website is
+        # only asked when company.md has nothing (see answerer.respond).
+        self.site: Retriever | None = None
+        if not _site:
+            site = [c for c in chunks if c.get("source", "").startswith(SITE_SOURCE_PREFIX)]
+            if site:
+                chunks = [c for c in chunks if not c.get("source", "").startswith(SITE_SOURCE_PREFIX)]
+                self.site = Retriever(site, _site=True)
         self.chunks = chunks
         self.doc_tokens = [c["tokens"] for c in chunks]
         self.doc_stems = [{stem(t) for t in toks} for toks in self.doc_tokens]
